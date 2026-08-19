@@ -1,13 +1,17 @@
 import type { Request, Response } from "express";
 import { asyncHandler } from "../utils/asyncHandler";
-import { doctorService } from "../services/doctor.service";
+import { Doctor } from "../models/Doctor";
 
-export const listDoctors = asyncHandler(async (req: Request, res: Response) => {
-  const doctors = await doctorService.listDoctors();
-  res.json({ success: true, data: doctors });
+export const listDoctors = asyncHandler(async (_req: Request, res: Response) => {
+  const doctors = await Doctor.find().sort({ createdAt: -1 });
+  res.status(200).json({ success: true, data: doctors });
 });
 
 export const getDoctorById = asyncHandler(async (req: Request, res: Response) => {
-  const doctor = await doctorService.getDoctorById(req.params.id as string);
-  res.json({ success: true, data: doctor });
+  const doctor = await Doctor.findById(req.params.id);
+  if (!doctor) {
+    throw new Error("Doctor not found");
+  }
+
+  res.status(200).json({ success: true, data: doctor });
 });

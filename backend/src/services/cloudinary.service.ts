@@ -1,5 +1,4 @@
 import { cloudinary, cloudinaryFolders } from "../config/cloudinary";
-import { ApiError } from "../utils/ApiError";
 
 export interface CloudinaryUploadResult {
   url: string;
@@ -36,13 +35,13 @@ export const cloudinaryService = {
       return await uploadBuffer(buffer, cloudinaryFolders.profiles);
     } catch (err) {
       console.error("Failed to upload profile image to Cloudinary", err);
-      throw ApiError.badRequest("Failed to upload image. Please try again.");
+      throw new Error("Failed to upload image. Please try again.");
     }
   },
 
   async deleteProfileImage(publicId: string): Promise<void> {
     if (!publicId.startsWith(`${cloudinaryFolders.profiles}/`)) {
-      throw ApiError.badRequest("Invalid image reference");
+      throw new Error("Invalid image reference");
     }
     await deleteAsset(publicId);
   },

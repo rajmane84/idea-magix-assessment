@@ -12,3 +12,5 @@ export const PHONE_REGEX = /^\+?[1-9]\d{7,14}$/;
 
 export const MAX_OTP_ATTEMPTS = 5;
 export const OTP_RESEND_COOLDOWN_MS = 60 * 1000;
+
+export const CONSULTATION_FEE = 500;

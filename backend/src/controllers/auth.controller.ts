@@ -14,7 +14,6 @@ import { comparePassword } from "../utils/password";
 import { generateToken } from "../utils/jwt";
 import { generateOtp, hashOtp, compareOtp, OTP_TTL_MS } from "../utils/otp";
 import { emailService } from "../services/email.service";
-import { ApiError } from "../utils/ApiError";
 import type { AuthenticatedRequest } from "../types";
 
 type VerifiableUser = InstanceType<typeof Doctor> | InstanceType<typeof Patient>;
@@ -45,7 +44,7 @@ export const registerDoctor = asyncHandler(async (req: Request, res: Response) =
 
   const existing = await Doctor.findOne({ $or: [{ email }, { phone }] });
   if (existing) {
-    throw ApiError.conflict(
+    throw new Error(
       existing.email === email ? "Email is already registered" : "Phone number is already registered"
     );
   }
@@ -102,7 +101,7 @@ export const registerPatient = asyncHandler(async (req: Request, res: Response) 
 
   const existing = await Patient.findOne({ $or: [{ email }, { phone }] });
   if (existing) {
-    throw ApiError.conflict(
+    throw new Error(
       existing.email === email ? "Email is already registered" : "Phone number is already registered"
     );
   }
@@ -159,11 +158,11 @@ export const me = asyncHandler(async (req: AuthenticatedRequest, res: Response) 
 
   if (user.role === "doctor") {
     const doctor = await Doctor.findById(user.id);
-    if (!doctor) throw ApiError.notFound("Doctor not found");
+    if (!doctor) throw new Error("Doctor not found");
     return res.status(200).json({ success: true, data: { role: "doctor", doctor } });
   }
   const patient = await Patient.findById(user.id);
-  if (!patient) throw ApiError.notFound("Patient not found");
+  if (!patient) throw new Error("Patient not found");
   res.status(200).json({ success: true, data: { role: "patient", patient } });
 });
 
@@ -201,7 +200,7 @@ export const verifyOtp = asyncHandler(async (req: AuthenticatedRequest, res: Res
   if (!isValid) {
     account.otpAttempts += 1;
     await account.save();
-    throw ApiError.badRequest("Invalid verification code");
+    throw new Error("Invalid verification code");
   }
 
   account.isVerified = true;

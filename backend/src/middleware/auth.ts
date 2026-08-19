@@ -1,6 +1,5 @@
 import type { NextFunction, Response } from "express";
 import { verifyToken } from "../utils/jwt";
-import { ApiError } from "../utils/ApiError";
 import type { AuthenticatedRequest, UserRole } from "../types";
 
 export function requireAuth(...allowedRoles: UserRole[]) {
@@ -11,18 +10,18 @@ export function requireAuth(...allowedRoles: UserRole[]) {
     const token = req.cookies?.token ?? bearer;
 
     if (!token) {
-      return next(ApiError.unauthorized("Authentication required"));
+      return next(new Error("Authentication required"));
     }
 
     try {
       const payload = verifyToken(token);
       if (allowedRoles.length > 0 && !allowedRoles.includes(payload.role)) {
-        return next(ApiError.forbidden("You do not have access to this resource"));
+        return next(new Error("You do not have access to this resource"));
       }
       req.user = payload;
       next();
     } catch {
-      next(ApiError.unauthorized("Invalid or expired session"));
+      next(new Error("Invalid or expired session"));
     }
   };
 }
