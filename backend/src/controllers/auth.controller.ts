@@ -6,6 +6,7 @@ import {
   doctorSignUpSchema,
   patientSignInSchema,
   patientSignUpSchema,
+  verifyOtpSchema,
 } from "../schemas/auth.schema";
 import { env } from "../config/env";
 import { Doctor } from "../models/Doctor";
@@ -64,5 +65,18 @@ export const authController = {
     const patient = await Patient.findById(req.user.id);
     if (!patient) throw ApiError.notFound("Patient not found");
     res.json({ success: true, data: { role: "patient", patient } });
+  }),
+
+  verifyOtp: asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
+    if (!req.user) throw ApiError.unauthorized();
+    const { code } = verifyOtpSchema.parse(req.body);
+    const user = await authService.verifyOtp(req.user.role, req.user.id, code);
+    res.json({ success: true, message: "Account verified successfully", data: { [req.user.role]: user } });
+  }),
+
+  resendOtp: asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
+    if (!req.user) throw ApiError.unauthorized();
+    await authService.resendOtp(req.user.role, req.user.id);
+    res.json({ success: true, message: "A new verification code has been sent to your email" });
   }),
 };

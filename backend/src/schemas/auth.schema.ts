@@ -47,7 +47,12 @@ export const patientSignInSchema = z.object({
   password: z.string().min(1, "Password is required"),
 });
 
+export const verifyOtpSchema = z.object({
+  code: z.string().trim().regex(/^\d{6}$/, "Enter the 6-digit code"),
+});
+
 export type DoctorSignUpInput = z.infer<typeof doctorSignUpSchema>;
 export type DoctorSignInInput = z.infer<typeof doctorSignInSchema>;
 export type PatientSignUpInput = z.infer<typeof patientSignUpSchema>;
 export type PatientSignInInput = z.infer<typeof patientSignInSchema>;
+export type VerifyOtpInput = z.infer<typeof verifyOtpSchema>;

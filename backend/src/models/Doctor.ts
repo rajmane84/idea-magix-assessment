@@ -9,6 +9,9 @@ const doctorSchema = new Schema(
     phone: { type: String, required: true, unique: true, trim: true },
     yearsOfExperience: { type: Number, required: true, min: 0 },
     password: { type: String, required: true, select: false },
+    isVerified: { type: Boolean, default: false },
+    otpCodeHash: { type: String, select: false, default: null },
+    otpExpiresAt: { type: Date, select: false, default: null },
   },
   { timestamps: true }
 );

@@ -19,8 +19,8 @@ export function useDoctorSignUp() {
     mutationFn: (payload: DoctorSignUpPayload) => authService.doctorSignUp(payload),
     onSuccess: ({ doctor, token }) => {
       loginAsDoctor(doctor, token);
-      toast.success("Account created successfully");
-      router.push("/doctor/profile");
+      toast.success("Account created. Check your email for a verification code.");
+      router.push("/doctor/verify-otp");
     },
     onError: (error) => toast.error(extractErrorMessage(error)),
   });
@@ -35,7 +35,7 @@ export function useDoctorSignIn() {
     onSuccess: ({ doctor, token }) => {
       loginAsDoctor(doctor, token);
       toast.success("Welcome back, " + doctor.name);
-      router.push("/doctor/profile");
+      router.push(doctor.isVerified ? "/doctor/profile" : "/doctor/verify-otp");
     },
     onError: (error) => toast.error(extractErrorMessage(error)),
   });
@@ -49,8 +49,8 @@ export function usePatientSignUp() {
     mutationFn: (payload: PatientSignUpPayload) => authService.patientSignUp(payload),
     onSuccess: ({ patient, token }) => {
       loginAsPatient(patient, token);
-      toast.success("Account created successfully");
-      router.push("/patient/doctors");
+      toast.success("Account created. Check your email for a verification code.");
+      router.push("/patient/verify-otp");
     },
     onError: (error) => toast.error(extractErrorMessage(error)),
   });
@@ -65,8 +65,32 @@ export function usePatientSignIn() {
     onSuccess: ({ patient, token }) => {
       loginAsPatient(patient, token);
       toast.success("Welcome back, " + patient.name);
-      router.push("/patient/doctors");
+      router.push(patient.isVerified ? "/patient/doctors" : "/patient/verify-otp");
     },
+    onError: (error) => toast.error(extractErrorMessage(error)),
+  });
+}
+
+export function useVerifyOtp() {
+  const { role, updateCurrentUser } = useSession();
+  const router = useRouter();
+
+  return useMutation({
+    mutationFn: (code: string) => authService.verifyOtp(code),
+    onSuccess: (data) => {
+      const user = "doctor" in data ? data.doctor : data.patient;
+      updateCurrentUser(user);
+      toast.success("Account verified successfully");
+      router.push(role === "doctor" ? "/doctor/profile" : "/patient/doctors");
+    },
+    onError: (error) => toast.error(extractErrorMessage(error)),
+  });
+}
+
+export function useResendOtp() {
+  return useMutation({
+    mutationFn: () => authService.resendOtp(),
+    onSuccess: () => toast.success("A new verification code has been sent to your email"),
     onError: (error) => toast.error(extractErrorMessage(error)),
   });
 }

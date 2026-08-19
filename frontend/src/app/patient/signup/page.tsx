@@ -62,7 +62,7 @@ export default function PatientSignUpPage() {
                     Age
                     <RequiredMark />
                   </FieldLabel>
-                  <Input id="age" type="number" placeholder="30" {...register("age", { setValueAs: emptyStringToUndefined })} />
+                  <Input id="age" type="number" placeholder="30" min={1} max={150} {...register("age", { setValueAs: emptyStringToUndefined })} />
                   <FieldError errors={[errors.age]} />
                 </Field>
               </Field>

@@ -60,6 +60,7 @@ export function ConsultationForm({ doctorId }: { doctorId: string }) {
       hadRecentSurgery: false,
       surgeryDetails: "",
       surgeryTimeSpan: "",
+      diabetesStatus: "" as unknown as FormValues["diabetesStatus"],
       allergies: "",
       others: "",
     },
@@ -120,7 +121,7 @@ export function ConsultationForm({ doctorId }: { doctorId: string }) {
               <FieldGroup>
                 <Field>
                   <FieldLabel htmlFor="currentIllnessHistory">
-                    Current Illness History
+                    Current Illness Detail
                     <RequiredMark />
                   </FieldLabel>
                   <Textarea

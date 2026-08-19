@@ -8,6 +8,7 @@ export interface Doctor {
   email: string;
   phone: string;
   yearsOfExperience: number;
+  isVerified: boolean;
   createdAt: string;
   updatedAt: string;
 }
@@ -21,6 +22,7 @@ export interface Patient {
   phone: string;
   surgeryHistory: string;
   illnessHistory: string[];
+  isVerified: boolean;
   createdAt: string;
   updatedAt: string;
 }

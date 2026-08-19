@@ -29,7 +29,7 @@ export type DoctorSignInValues = z.infer<typeof doctorSignInSchema>;
 
 export const patientSignUpSchema = z.object({
   name: requiredString("Name", 2),
-  age: requiredNumber("Age", (s) => s.int("Age must be a whole number").min(0).max(150)),
+  age: requiredNumber("Age", (s) => s.int("Age must be a whole number").min(1).max(150)),
   email: emailField,
   phone: phoneField,
   surgeryHistory: z.string().trim().optional(),
@@ -44,3 +44,8 @@ export const patientSignInSchema = z.object({
   password: requiredString("Password"),
 });
 export type PatientSignInValues = z.infer<typeof patientSignInSchema>;
+
+export const verifyOtpSchema = z.object({
+  code: z.string().regex(/^\d{6}$/, "Enter the 6-digit code"),
+});
+export type VerifyOtpValues = z.infer<typeof verifyOtpSchema>;

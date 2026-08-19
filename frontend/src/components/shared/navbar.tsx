@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { useSession } from "@/providers/session-provider";
 import { useLogout } from "@/hooks/use-auth";
 import { Button } from "@/components/ui/button";
@@ -11,10 +12,12 @@ import { Stethoscope } from "lucide-react";
 export function Navbar() {
   const { role, doctor, patient, isHydrated } = useSession();
   const logout = useLogout();
+  const pathname = usePathname();
 
   const name = doctor?.name ?? patient?.name;
   const image = doctor?.profileImage ?? patient?.profileImage;
   const homeHref = role === "doctor" ? "/doctor/profile" : role === "patient" ? "/patient/doctors" : "/";
+  const isVerifyOtpPage = pathname?.endsWith("/verify-otp") ?? false;
 
   return (
     <header className="sticky top-0 z-40 border-b bg-background/95 backdrop-blur">
@@ -24,7 +27,7 @@ export function Navbar() {
           Prescripto
         </Link>
 
-        {isHydrated && role && (
+        {isHydrated && role && !isVerifyOtpPage && (
           <div className="flex items-center gap-3">
             <Avatar className="h-8 w-8">
               <AvatarImage src={resolveAssetUrl(image)} alt={name} />

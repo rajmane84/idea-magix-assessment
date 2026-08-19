@@ -2,8 +2,32 @@ import { Doctor } from "../models/Doctor";
 import { Patient } from "../models/Patient";
 import { hashPassword, comparePassword } from "../utils/password";
 import { signToken } from "../utils/jwt";
+import { generateOtp, hashOtp, compareOtp, OTP_TTL_MS } from "../utils/otp";
+import { emailService } from "./email.service";
 import { ApiError } from "../utils/ApiError";
-import type { DoctorSignUpInput, DoctorSignInInput, PatientSignUpInput, PatientSignInInput } from "../schemas/auth.schema";
+import type { UserRole } from "../types";
+import type {
+  DoctorSignUpInput,
+  DoctorSignInInput,
+  PatientSignUpInput,
+  PatientSignInInput,
+} from "../schemas/auth.schema";
+
+type VerifiableUser = InstanceType<typeof Doctor> | InstanceType<typeof Patient>;
+
+/** Generates a fresh OTP, persists its hash on the user, and emails it. Signup/login stay usable even if the email send fails. */
+async function issueOtp(user: VerifiableUser) {
+  const code = generateOtp();
+  user.otpCodeHash = await hashOtp(code);
+  user.otpExpiresAt = new Date(Date.now() + OTP_TTL_MS);
+  await user.save();
+
+  try {
+    await emailService.sendOtpEmail(user.email, user.name, code);
+  } catch (err) {
+    console.error(`Failed to send OTP email to ${user.email}`, err);
+  }
+}
 
 export const authService = {
   async registerDoctor(input: DoctorSignUpInput) {
@@ -16,6 +40,7 @@ export const authService = {
 
     const password = await hashPassword(input.password);
     const doctor = await Doctor.create({ ...input, password });
+    await issueOtp(doctor);
     const token = signToken({ id: doctor.id, role: "doctor" });
 
     return { doctor: toSafeDoctor(doctor), token };
@@ -42,6 +67,7 @@ export const authService = {
 
     const password = await hashPassword(input.password);
     const patient = await Patient.create({ ...input, password });
+    await issueOtp(patient);
     const token = signToken({ id: patient.id, role: "patient" });
 
     return { patient: toSafePatient(patient), token };
@@ -57,16 +83,46 @@ export const authService = {
     const token = signToken({ id: patient.id, role: "patient" });
     return { patient: toSafePatient(patient), token };
   },
+
+  async verifyOtp(role: UserRole, userId: string, code: string) {
+    const user =
+      role === "doctor"
+        ? await Doctor.findById(userId).select("+otpCodeHash +otpExpiresAt")
+        : await Patient.findById(userId).select("+otpCodeHash +otpExpiresAt");
+    if (!user) throw ApiError.notFound("Account not found");
+    if (user.isVerified) throw ApiError.badRequest("Account is already verified");
+    if (!user.otpCodeHash || !user.otpExpiresAt || user.otpExpiresAt.getTime() < Date.now()) {
+      throw ApiError.badRequest("This code has expired. Please request a new one.");
+    }
+
+    const isValid = await compareOtp(code, user.otpCodeHash);
+    if (!isValid) throw ApiError.badRequest("Invalid verification code");
+
+    user.isVerified = true;
+    user.otpCodeHash = null;
+    user.otpExpiresAt = null;
+    await user.save();
+
+    return role === "doctor"
+      ? toSafeDoctor(user as InstanceType<typeof Doctor>)
+      : toSafePatient(user as InstanceType<typeof Patient>);
+  },
+
+  async resendOtp(role: UserRole, userId: string) {
+    const user = role === "doctor" ? await Doctor.findById(userId) : await Patient.findById(userId);
+    if (!user) throw ApiError.notFound("Account not found");
+    if (user.isVerified) throw ApiError.badRequest("Account is already verified");
+
+    await issueOtp(user);
+  },
 };
 
 function toSafeDoctor(doctor: InstanceType<typeof Doctor>) {
-  const obj = doctor.toObject();
-  delete (obj as { password?: string }).password;
-  return obj;
+  const { password, otpCodeHash, otpExpiresAt, ...safe } = doctor.toObject();
+  return safe;
 }
 
 function toSafePatient(patient: InstanceType<typeof Patient>) {
-  const obj = patient.toObject();
-  delete (obj as { password?: string }).password;
-  return obj;
+  const { password, otpCodeHash, otpExpiresAt, ...safe } = patient.toObject();
+  return safe;
 }

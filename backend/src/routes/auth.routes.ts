@@ -10,5 +10,7 @@ router.post("/patient/signup", authController.registerPatient);
 router.post("/patient/signin", authController.loginPatient);
 router.post("/logout", authController.logout);
 router.get("/me", requireAuth(), authController.me);
+router.post("/verify-otp", requireAuth(), authController.verifyOtp);
+router.post("/resend-otp", requireAuth(), authController.resendOtp);
 
 export default router;

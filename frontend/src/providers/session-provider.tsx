@@ -14,6 +14,7 @@ interface SessionState {
 interface SessionContextValue extends SessionState {
   loginAsDoctor: (doctor: Doctor, token: string) => void;
   loginAsPatient: (patient: Patient, token: string) => void;
+  updateCurrentUser: (user: Doctor | Patient) => void;
   logout: () => void;
 }
 
@@ -66,13 +67,27 @@ export function SessionProvider({ children }: { children: ReactNode }) {
     setState({ role: "patient", patient, doctor: null, token, isHydrated: true });
   }, []);
 
+  const updateCurrentUser = useCallback((user: Doctor | Patient) => {
+    setState((prev) => {
+      if (prev.role === "doctor") {
+        window.localStorage.setItem(STORAGE_KEYS.doctor, JSON.stringify(user));
+        return { ...prev, doctor: user as Doctor };
+      }
+      if (prev.role === "patient") {
+        window.localStorage.setItem(STORAGE_KEYS.patient, JSON.stringify(user));
+        return { ...prev, patient: user as Patient };
+      }
+      return prev;
+    });
+  }, []);
+
   const logout = useCallback(() => {
     Object.values(STORAGE_KEYS).forEach((key) => window.localStorage.removeItem(key));
     setState({ role: null, doctor: null, patient: null, token: null, isHydrated: true });
   }, []);
 
   return (
-    <SessionContext.Provider value={{ ...state, loginAsDoctor, loginAsPatient, logout }}>
+    <SessionContext.Provider value={{ ...state, loginAsDoctor, loginAsPatient, updateCurrentUser, logout }}>
       {children}
     </SessionContext.Provider>
   );

@@ -11,6 +11,9 @@ const patientSchema = new Schema(
     // Stored as an array; frontend renders as comma-separated panel/pills.
     illnessHistory: { type: [String], default: [] },
     password: { type: String, required: true, select: false },
+    isVerified: { type: Boolean, default: false },
+    otpCodeHash: { type: String, select: false, default: null },
+    otpExpiresAt: { type: Date, select: false, default: null },
   },
   { timestamps: true }
 );

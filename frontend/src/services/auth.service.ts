@@ -75,4 +75,15 @@ export const authService = {
     );
     return res.data.data;
   },
+
+  async verifyOtp(code: string) {
+    const res = await apiClient.post<ApiSuccess<{ doctor: Doctor } | { patient: Patient }>>("/auth/verify-otp", {
+      code,
+    });
+    return res.data.data;
+  },
+
+  async resendOtp() {
+    await apiClient.post("/auth/resend-otp");
+  },
 };
