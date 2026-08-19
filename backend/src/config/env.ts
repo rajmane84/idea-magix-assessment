@@ -10,6 +10,10 @@ const envSchema = z
     NODE_ENV: z.enum(["development", "production", "test"]).default("development"),
     EMAIL_FROM: z.string().default("Prescripto <onboarding@resend.dev>"),
     RESEND_API_KEY: z.string().optional(),
+    CLOUDINARY_CLOUD_NAME: z.string().min(1, "CLOUDINARY_CLOUD_NAME is required"),
+    CLOUDINARY_API_KEY: z.string().min(1, "CLOUDINARY_API_KEY is required"),
+    CLOUDINARY_API_SECRET: z.string().min(1, "CLOUDINARY_API_SECRET is required"),
+    CLOUDINARY_FOLDER: z.string().default("prescripto"),
   })
   .check((ctx) => {
     if (ctx.value.NODE_ENV === "production" && !ctx.value.RESEND_API_KEY) {
@@ -40,4 +44,10 @@ export const env = {
   isProd: parsed.data.NODE_ENV === "production",
   emailFrom: parsed.data.EMAIL_FROM,
   resendApiKey: parsed.data.RESEND_API_KEY,
+  cloudinary: {
+    cloudName: parsed.data.CLOUDINARY_CLOUD_NAME,
+    apiKey: parsed.data.CLOUDINARY_API_KEY,
+    apiSecret: parsed.data.CLOUDINARY_API_SECRET,
+    folder: parsed.data.CLOUDINARY_FOLDER,
+  },
 };

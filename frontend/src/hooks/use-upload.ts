@@ -6,6 +6,13 @@ import { extractErrorMessage } from "@/lib/api-client";
 export function useUploadProfileImage() {
   return useMutation({
     mutationFn: (file: File) => uploadService.uploadProfileImage(file),
+    onSuccess: () => toast.success("Photo uploaded"),
     onError: (error) => toast.error(extractErrorMessage(error)),
+  });
+}
+
+export function useDeleteProfileImage() {
+  return useMutation({
+    mutationFn: (publicId: string) => uploadService.deleteProfileImage(publicId),
   });
 }

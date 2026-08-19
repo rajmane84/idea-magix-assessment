@@ -30,11 +30,9 @@ report.[0-9]_.[0-9]_.[0-9]_.[0-9]_.json
 # IntelliJ based IDEs
 .idea
 
-# uploaded files
-uploads/profiles/*
+# uploaded files (profile images now live in Cloudinary, not on disk)
 uploads/qr/*
 uploads/prescriptions/*
-!uploads/profiles/.gitkeep
 !uploads/qr/.gitkeep
 !uploads/prescriptions/.gitkeep
 

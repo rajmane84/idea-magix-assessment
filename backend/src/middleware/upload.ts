@@ -1,16 +1,4 @@
 import multer from "multer";
-import path from "node:path";
-import { nanoid } from "nanoid";
-
-const storage = multer.diskStorage({
-  destination: (req, file, cb) => {
-    cb(null, path.join(process.cwd(), "uploads", "profiles"));
-  },
-  filename: (req, file, cb) => {
-    const ext = path.extname(file.originalname) || ".jpg";
-    cb(null, `${nanoid()}${ext}`);
-  },
-});
 
 function imageFileFilter(req: unknown, file: Express.Multer.File, cb: multer.FileFilterCallback) {
   if (!file.mimetype.startsWith("image/")) {
@@ -19,8 +7,10 @@ function imageFileFilter(req: unknown, file: Express.Multer.File, cb: multer.Fil
   cb(null, true);
 }
 
+// Buffers the file in memory so it can be streamed straight to Cloudinary
+// without ever touching the local filesystem.
 export const uploadProfileImage = multer({
-  storage,
+  storage: multer.memoryStorage(),
   fileFilter: imageFileFilter,
   limits: { fileSize: 5 * 1024 * 1024 },
 });

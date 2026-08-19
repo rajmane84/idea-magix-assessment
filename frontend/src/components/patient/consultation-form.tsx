@@ -121,7 +121,7 @@ export function ConsultationForm({ doctorId }: { doctorId: string }) {
               <FieldGroup>
                 <Field>
                   <FieldLabel htmlFor="currentIllnessHistory">
-                    Current Illness Detail
+                    Current Illness History
                     <RequiredMark />
                   </FieldLabel>
                   <Textarea

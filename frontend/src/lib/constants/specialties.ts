@@ -1,0 +1,25 @@
+export const SPECIALTIES = [
+  "General Physician",
+  "Cardiology",
+  "Dermatology",
+  "Neurology",
+  "Orthopedics",
+  "Pediatrics",
+  "Gynecology",
+  "Psychiatry",
+  "ENT (Otolaryngology)",
+  "Ophthalmology",
+  "Dentistry",
+  "Urology",
+  "Gastroenterology",
+  "Endocrinology",
+  "Pulmonology",
+  "Oncology",
+  "Nephrology",
+  "Rheumatology",
+  "Radiology",
+  "Anesthesiology",
+  "General Surgery",
+] as const;
+
+export const OTHER_SPECIALTY = "Other";

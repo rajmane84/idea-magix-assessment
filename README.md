@@ -113,9 +113,10 @@ The frontend expects the API at `NEXT_PUBLIC_API_URL` (defaults to `http://local
 | GET | `/prescriptions/mine` | patient | Prescriptions sent to the patient |
 | GET | `/prescriptions/consultation/:consultationId` | doctor/patient | Prescription for one consultation |
 | GET | `/prescriptions/:id` | doctor/patient | Prescription details |
-| POST | `/uploads/profile-image` | — | Upload a profile image (multipart) |
+| POST | `/uploads/profile-image` | — | Upload a profile image to Cloudinary (multipart) |
+| DELETE | `/uploads/profile-image` | — | Delete a profile image from Cloudinary by `publicId` |
 
-Static files (profile images, QR codes, prescription PDFs) are served from `/uploads/*`.
+Profile images live in Cloudinary (see below). QR codes and generated prescription PDFs are still served locally from `/uploads/*`.
 
 ---
 
@@ -126,3 +127,5 @@ Static files (profile images, QR codes, prescription PDFs) are served from `/upl
 - **Illness history**: stored as a `string[]` in MongoDB, entered as a comma-separated field in the UI and rendered as badges in a panel.
 - **Payment**: no real payment gateway is integrated — a QR code encoding a mock UPI payment string is generated per doctor/consultation, and the patient records the transaction ID they used.
 - **Prescription PDF**: generated with PDFKit on prescription create/update and stored under `backend/uploads/prescriptions`. The doctor can download it, send/resend it to the patient (flips `sentToPatient` + `sentAt`), or edit it (which regenerates the PDF and resets the "sent" flag until resent).
+- **Profile images**: uploaded via Multer (buffered in memory, never written to disk) and streamed straight to Cloudinary through `backend/src/services/cloudinary.service.ts` (`addProfileImage` / `deleteProfileImage`). All uploads live under a dedicated `CLOUDINARY_FOLDER/profiles` folder (configured in `backend/src/config/cloudinary.ts`) so they stay isolated from anything else in the same Cloudinary account. When a user swaps their photo before submitting a form, the previous upload is deleted from Cloudinary in the background.
+- **OTP email verification**: a 6-digit code is emailed after signup (via Resend in production, a Nodemailer Ethereal sandbox in development — see `backend/src/services/email.service.ts`). Sensitive actions (submitting a consultation, creating/editing/sending a prescription) are gated behind `isVerified` on the account.

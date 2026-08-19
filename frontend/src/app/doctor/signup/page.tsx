@@ -2,27 +2,31 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { useForm } from "react-hook-form";
+import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Field, FieldError, FieldGroup, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { ProfileImageUpload } from "@/components/shared/profile-image-upload";
 import { PasswordInput } from "@/components/shared/password-input";
 import { useDoctorSignUp } from "@/hooks/use-auth";
 import { doctorSignUpSchema, type DoctorSignUpValues } from "@/lib/validation/auth";
 import { emptyStringToUndefined } from "@/lib/validation/common";
 import { RequiredMark } from "@/components/shared/required-mark";
+import { SPECIALTIES, OTHER_SPECIALTY } from "@/lib/constants/specialties";
 import { Loader2 } from "lucide-react";
 
 export default function DoctorSignUpPage() {
   const [profileImage, setProfileImage] = useState("");
+  const [specialtyOption, setSpecialtyOption] = useState("");
   const { mutate, isPending } = useDoctorSignUp();
 
   const {
     register,
     handleSubmit,
+    control,
     formState: { errors },
   } = useForm<DoctorSignUpValues>({
     resolver: zodResolver(doctorSignUpSchema),
@@ -49,7 +53,7 @@ export default function DoctorSignUpPage() {
                   Full Name
                   <RequiredMark />
                 </FieldLabel>
-                <Input id="name" placeholder="Dr. Jane Doe" {...register("name")} />
+                <Input id="name" placeholder="Jane Doe" {...register("name")} />
                 <FieldError errors={[errors.name]} />
               </Field>
 
@@ -58,12 +62,46 @@ export default function DoctorSignUpPage() {
                   Specialty
                   <RequiredMark />
                 </FieldLabel>
-                <Input id="specialty" placeholder="Cardiology" {...register("specialty")} />
+                <Controller
+                  control={control}
+                  name="specialty"
+                  render={({ field }) => (
+                    <div className="space-y-2">
+                      <Select
+                        value={specialtyOption}
+                        onValueChange={(val) => {
+                          if (!val) return;
+                          setSpecialtyOption(val);
+                          field.onChange(val === OTHER_SPECIALTY ? "" : val);
+                        }}
+                      >
+                        <SelectTrigger id="specialty" className="w-full">
+                          <SelectValue placeholder="Select a specialty" />
+                        </SelectTrigger>
+                        <SelectContent className="max-h-64 overflow-y-auto">
+                          {SPECIALTIES.map((specialty) => (
+                            <SelectItem key={specialty} value={specialty}>
+                              {specialty}
+                            </SelectItem>
+                          ))}
+                          <SelectItem value={OTHER_SPECIALTY}>{OTHER_SPECIALTY}</SelectItem>
+                        </SelectContent>
+                      </Select>
+                      {specialtyOption === OTHER_SPECIALTY && (
+                        <Input
+                          placeholder="Enter your specialty"
+                          value={field.value ?? ""}
+                          onChange={(e) => field.onChange(e.target.value)}
+                        />
+                      )}
+                    </div>
+                  )}
+                />
                 <FieldError errors={[errors.specialty]} />
               </Field>
 
               <Field orientation="responsive">
-                <Field>
+                <Field className="flex-1">
                   <FieldLabel htmlFor="email">
                     Email
                     <RequiredMark />
@@ -71,7 +109,7 @@ export default function DoctorSignUpPage() {
                   <Input id="email" type="email" placeholder="doctor@example.com" {...register("email")} />
                   <FieldError errors={[errors.email]} />
                 </Field>
-                <Field>
+                <Field className="flex-1">
                   <FieldLabel htmlFor="phone">
                     Phone Number
                     <RequiredMark />

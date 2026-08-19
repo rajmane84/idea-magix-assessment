@@ -49,7 +49,7 @@ export default function PatientSignUpPage() {
               <ProfileImageUpload value={profileImage} onChange={setProfileImage} fallback="P" />
 
               <Field orientation="responsive">
-                <Field>
+                <Field className="flex-1">
                   <FieldLabel htmlFor="name">
                     Full Name
                     <RequiredMark />
@@ -57,7 +57,7 @@ export default function PatientSignUpPage() {
                   <Input id="name" placeholder="John Smith" {...register("name")} />
                   <FieldError errors={[errors.name]} />
                 </Field>
-                <Field>
+                <Field className="flex-1">
                   <FieldLabel htmlFor="age">
                     Age
                     <RequiredMark />
@@ -68,7 +68,7 @@ export default function PatientSignUpPage() {
               </Field>
 
               <Field orientation="responsive">
-                <Field>
+                <Field className="flex-1">
                   <FieldLabel htmlFor="email">
                     Email
                     <RequiredMark />
@@ -76,7 +76,7 @@ export default function PatientSignUpPage() {
                   <Input id="email" type="email" placeholder="patient@example.com" {...register("email")} />
                   <FieldError errors={[errors.email]} />
                 </Field>
-                <Field>
+                <Field className="flex-1">
                   <FieldLabel htmlFor="phone">
                     Phone Number
                     <RequiredMark />

@@ -5,5 +5,6 @@ import { uploadProfileImage } from "../middleware/upload";
 const router = Router();
 
 router.post("/profile-image", uploadProfileImage.single("image"), uploadController.uploadProfileImage);
+router.delete("/profile-image", uploadController.deleteProfileImage);
 
 export default router;
