@@ -1,10 +1,11 @@
 import { useQuery } from "@tanstack/react-query";
 import { doctorService } from "@/services/doctor.service";
 
-export function useDoctors() {
+export function useDoctors(page = 1, limit = 10) {
   return useQuery({
-    queryKey: ["doctors"],
-    queryFn: () => doctorService.list(),
+    queryKey: ["doctors", page, limit],
+    queryFn: () => doctorService.list(page, limit),
+    placeholderData: (previousData) => previousData,
   });
 }
 

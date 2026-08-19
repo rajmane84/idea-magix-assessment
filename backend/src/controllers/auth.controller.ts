@@ -62,7 +62,7 @@ export const registerDoctor = asyncHandler(async (req: Request, res: Response) =
   const token = generateToken({ id: doctor.id, role: "doctor" });
 
   res.cookie("token", token, COOKIE_OPTIONS);
-  res.status(201).json({ success: true, message: "Account created successfully", data: { doctor, token } });
+  res.status(201).json({ success: true, message: "Account created successfully", data: { doctor } });
 })
 
 export const loginDoctor = asyncHandler(async (req: Request, res: Response) => {
@@ -87,7 +87,7 @@ export const loginDoctor = asyncHandler(async (req: Request, res: Response) => {
   const token = generateToken({ id: doctor.id, role: "doctor" });
 
   res.cookie("token", token, COOKIE_OPTIONS);
-  res.status(200).json({ success: true, message: "Logged in successfully", data: { doctor, token } });
+  res.status(200).json({ success: true, message: "Logged in successfully", data: { doctor } });
 });
 
 export const registerPatient = asyncHandler(async (req: Request, res: Response) => {
@@ -120,7 +120,7 @@ export const registerPatient = asyncHandler(async (req: Request, res: Response) 
   const token = generateToken({ id: patient.id, role: "patient" });
 
   res.cookie("token", token, COOKIE_OPTIONS);
-  res.status(201).json({ success: true, message: "Account created successfully", data: { patient, token } });
+  res.status(201).json({ success: true, message: "Account created successfully", data: { patient } });
 });
 
 export const loginPatient = asyncHandler(async (req: Request, res: Response) => {
@@ -145,7 +145,7 @@ export const loginPatient = asyncHandler(async (req: Request, res: Response) => 
   const token = generateToken({ id: patient.id, role: "patient" });
 
   res.cookie("token", token, COOKIE_OPTIONS);
-  res.status(200).json({ success: true, message: "Logged in successfully", data: { patient, token } });
+  res.status(200).json({ success: true, message: "Logged in successfully", data: { patient } });
 });
 
 export const logout = asyncHandler(async (_req: Request, res: Response) => {

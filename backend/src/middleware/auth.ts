@@ -4,10 +4,7 @@ import type { AuthenticatedRequest, UserRole } from "../types";
 
 export function requireAuth(...allowedRoles: UserRole[]) {
   return (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
-    const bearer = req.headers.authorization?.startsWith("Bearer ")
-      ? req.headers.authorization.slice(7)
-      : undefined;
-    const token = req.cookies?.token ?? bearer;
+    const token = req.cookies?.token;
 
     if (!token) {
       return next(new Error("Authentication required"));

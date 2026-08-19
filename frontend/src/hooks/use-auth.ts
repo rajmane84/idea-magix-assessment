@@ -17,8 +17,8 @@ export function useDoctorSignUp() {
 
   return useMutation({
     mutationFn: (payload: DoctorSignUpPayload) => authService.doctorSignUp(payload),
-    onSuccess: ({ doctor, token }) => {
-      loginAsDoctor(doctor, token);
+    onSuccess: ({ doctor }) => {
+      loginAsDoctor(doctor);
       toast.success("Account created. Check your email for a verification code.");
       router.push("/doctor/verify-otp");
     },
@@ -32,8 +32,8 @@ export function useDoctorSignIn() {
 
   return useMutation({
     mutationFn: (payload: DoctorSignInPayload) => authService.doctorSignIn(payload),
-    onSuccess: ({ doctor, token }) => {
-      loginAsDoctor(doctor, token);
+    onSuccess: ({ doctor }) => {
+      loginAsDoctor(doctor);
       toast.success("Welcome back, " + doctor.name);
       router.push(doctor.isVerified ? "/doctor/profile" : "/doctor/verify-otp");
     },
@@ -47,8 +47,8 @@ export function usePatientSignUp() {
 
   return useMutation({
     mutationFn: (payload: PatientSignUpPayload) => authService.patientSignUp(payload),
-    onSuccess: ({ patient, token }) => {
-      loginAsPatient(patient, token);
+    onSuccess: ({ patient }) => {
+      loginAsPatient(patient);
       toast.success("Account created. Check your email for a verification code.");
       router.push("/patient/verify-otp");
     },
@@ -62,8 +62,8 @@ export function usePatientSignIn() {
 
   return useMutation({
     mutationFn: (payload: PatientSignInPayload) => authService.patientSignIn(payload),
-    onSuccess: ({ patient, token }) => {
-      loginAsPatient(patient, token);
+    onSuccess: ({ patient }) => {
+      loginAsPatient(patient);
       toast.success("Welcome back, " + patient.name);
       router.push(patient.isVerified ? "/patient/doctors" : "/patient/verify-otp");
     },

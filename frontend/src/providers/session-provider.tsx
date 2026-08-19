@@ -7,13 +7,12 @@ interface SessionState {
   role: UserRole | null;
   doctor: Doctor | null;
   patient: Patient | null;
-  token: string | null;
   isHydrated: boolean;
 }
 
 interface SessionContextValue extends SessionState {
-  loginAsDoctor: (doctor: Doctor, token: string) => void;
-  loginAsPatient: (patient: Patient, token: string) => void;
+  loginAsDoctor: (doctor: Doctor) => void;
+  loginAsPatient: (patient: Patient) => void;
   updateCurrentUser: (user: Doctor | Patient) => void;
   logout: () => void;
 }
@@ -21,7 +20,6 @@ interface SessionContextValue extends SessionState {
 const SessionContext = createContext<SessionContextValue | undefined>(undefined);
 
 const STORAGE_KEYS = {
-  token: "token",
   role: "role",
   doctor: "doctor",
   patient: "patient",
@@ -32,18 +30,15 @@ export function SessionProvider({ children }: { children: ReactNode }) {
     role: null,
     doctor: null,
     patient: null,
-    token: null,
     isHydrated: false,
   });
 
   useEffect(() => {
-    const token = window.localStorage.getItem(STORAGE_KEYS.token);
     const role = window.localStorage.getItem(STORAGE_KEYS.role) as UserRole | null;
     const doctorRaw = window.localStorage.getItem(STORAGE_KEYS.doctor);
     const patientRaw = window.localStorage.getItem(STORAGE_KEYS.patient);
 
     setState({
-      token,
       role,
       doctor: doctorRaw ? (JSON.parse(doctorRaw) as Doctor) : null,
       patient: patientRaw ? (JSON.parse(patientRaw) as Patient) : null,
@@ -51,20 +46,18 @@ export function SessionProvider({ children }: { children: ReactNode }) {
     });
   }, []);
 
-  const loginAsDoctor = useCallback((doctor: Doctor, token: string) => {
-    window.localStorage.setItem(STORAGE_KEYS.token, token);
+  const loginAsDoctor = useCallback((doctor: Doctor) => {
     window.localStorage.setItem(STORAGE_KEYS.role, "doctor");
     window.localStorage.setItem(STORAGE_KEYS.doctor, JSON.stringify(doctor));
     window.localStorage.removeItem(STORAGE_KEYS.patient);
-    setState({ role: "doctor", doctor, patient: null, token, isHydrated: true });
+    setState({ role: "doctor", doctor, patient: null, isHydrated: true });
   }, []);
 
-  const loginAsPatient = useCallback((patient: Patient, token: string) => {
-    window.localStorage.setItem(STORAGE_KEYS.token, token);
+  const loginAsPatient = useCallback((patient: Patient) => {
     window.localStorage.setItem(STORAGE_KEYS.role, "patient");
     window.localStorage.setItem(STORAGE_KEYS.patient, JSON.stringify(patient));
     window.localStorage.removeItem(STORAGE_KEYS.doctor);
-    setState({ role: "patient", patient, doctor: null, token, isHydrated: true });
+    setState({ role: "patient", patient, doctor: null, isHydrated: true });
   }, []);
 
   const updateCurrentUser = useCallback((user: Doctor | Patient) => {
@@ -83,7 +76,7 @@ export function SessionProvider({ children }: { children: ReactNode }) {
 
   const logout = useCallback(() => {
     Object.values(STORAGE_KEYS).forEach((key) => window.localStorage.removeItem(key));
-    setState({ role: null, doctor: null, patient: null, token: null, isHydrated: true });
+    setState({ role: null, doctor: null, patient: null, isHydrated: true });
   }, []);
 
   return (

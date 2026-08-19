@@ -8,16 +8,6 @@ export const apiClient = axios.create({
   withCredentials: true,
 });
 
-apiClient.interceptors.request.use((config) => {
-  if (typeof window !== "undefined") {
-    const token = window.localStorage.getItem("token");
-    if (token) {
-      config.headers.Authorization = `Bearer ${token}`;
-    }
-  }
-  return config;
-});
-
 /** Resolves a relative `/uploads/...` path returned by the API into an absolute URL. */
 export function resolveAssetUrl(path?: string | null): string | undefined {
   if (!path) return undefined;

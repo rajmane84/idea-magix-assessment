@@ -1,10 +1,12 @@
 import { apiClient } from "@/lib/api-client";
-import type { ApiSuccess, Doctor } from "@/types";
+import type { ApiPaginated, ApiSuccess, Doctor } from "@/types";
 
 export const doctorService = {
-  async list() {
-    const res = await apiClient.get<ApiSuccess<Doctor[]>>("/doctors");
-    return res.data.data;
+  async list(page = 1, limit = 10) {
+    const res = await apiClient.get<ApiPaginated<Doctor[]>>("/doctors", {
+      params: { page, limit },
+    });
+    return { doctors: res.data.data, pagination: res.data.pagination };
   },
 
   async getById(id: string) {

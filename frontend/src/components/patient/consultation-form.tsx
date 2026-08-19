@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -39,13 +39,38 @@ const STEP_FIELDS = [
 
 const STEP_TITLES = ["Illness & Surgery History", "Family Medical History", "Payment"];
 
+const DEFAULT_VALUES: FormValues = {
+  hadRecentSurgery: false,
+  surgeryDetails: "",
+  surgeryTimeSpan: "",
+  diabetesStatus: "" as unknown as FormValues["diabetesStatus"],
+  allergies: "",
+  others: "",
+} as FormValues;
+
+function getStorageKey(doctorId: string) {
+  return `consultation-form:${doctorId}`;
+}
+
+function loadPersistedState(doctorId: string): { step: number; values: FormValues } | null {
+  if (typeof window === "undefined") return null;
+  try {
+    const raw = window.localStorage.getItem(getStorageKey(doctorId));
+    if (!raw) return null;
+    return JSON.parse(raw) as { step: number; values: FormValues };
+  } catch {
+    return null;
+  }
+}
+
 export function ConsultationForm({ doctorId }: { doctorId: string }) {
   const { isReady } = useRequireRole("patient", "/patient/signin");
   const { data: doctor, isLoading: isDoctorLoading } = useDoctor(doctorId);
   const { data: paymentInfo, isLoading: isQrLoading } = usePaymentQr(doctorId);
   const { mutate: createConsultation, isPending, isSuccess } = useCreateConsultation();
   const router = useRouter();
-  const [step, setStep] = useState(0);
+  const [persisted] = useState(() => loadPersistedState(doctorId));
+  const [step, setStep] = useState(() => persisted?.step ?? 0);
 
   const {
     register,
@@ -56,17 +81,17 @@ export function ConsultationForm({ doctorId }: { doctorId: string }) {
     formState: { errors },
   } = useForm<FormValues>({
     resolver: zodResolver(fullSchema),
-    defaultValues: {
-      hadRecentSurgery: false,
-      surgeryDetails: "",
-      surgeryTimeSpan: "",
-      diabetesStatus: "" as unknown as FormValues["diabetesStatus"],
-      allergies: "",
-      others: "",
-    },
+    defaultValues: { ...DEFAULT_VALUES, ...persisted?.values },
   });
 
   const hadRecentSurgery = watch("hadRecentSurgery");
+
+  useEffect(() => {
+    const subscription = watch((values) => {
+      window.localStorage.setItem(getStorageKey(doctorId), JSON.stringify({ step, values }));
+    });
+    return () => subscription.unsubscribe();
+  }, [watch, doctorId, step]);
 
   async function goNext() {
     const fields = STEP_FIELDS[step];
@@ -81,7 +106,12 @@ export function ConsultationForm({ doctorId }: { doctorId: string }) {
   function onSubmit(values: FormValues) {
     createConsultation(
       { doctorId, ...values },
-      { onSuccess: () => router.push("/patient/doctors") }
+      {
+        onSuccess: () => {
+          window.localStorage.removeItem(getStorageKey(doctorId));
+          router.push("/patient/doctors");
+        },
+      }
     );
   }
 

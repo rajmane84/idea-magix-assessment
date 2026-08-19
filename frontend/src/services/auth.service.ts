@@ -34,34 +34,22 @@ export interface PatientSignInPayload {
 
 export const authService = {
   async doctorSignUp(payload: DoctorSignUpPayload) {
-    const res = await apiClient.post<ApiSuccess<{ doctor: Doctor; token: string }>>(
-      "/auth/doctor/signup",
-      payload
-    );
+    const res = await apiClient.post<ApiSuccess<{ doctor: Doctor }>>("/auth/doctor/signup", payload);
     return res.data.data;
   },
 
   async doctorSignIn(payload: DoctorSignInPayload) {
-    const res = await apiClient.post<ApiSuccess<{ doctor: Doctor; token: string }>>(
-      "/auth/doctor/signin",
-      payload
-    );
+    const res = await apiClient.post<ApiSuccess<{ doctor: Doctor }>>("/auth/doctor/signin", payload);
     return res.data.data;
   },
 
   async patientSignUp(payload: PatientSignUpPayload) {
-    const res = await apiClient.post<ApiSuccess<{ patient: Patient; token: string }>>(
-      "/auth/patient/signup",
-      payload
-    );
+    const res = await apiClient.post<ApiSuccess<{ patient: Patient }>>("/auth/patient/signup", payload);
     return res.data.data;
   },
 
   async patientSignIn(payload: PatientSignInPayload) {
-    const res = await apiClient.post<ApiSuccess<{ patient: Patient; token: string }>>(
-      "/auth/patient/signin",
-      payload
-    );
+    const res = await apiClient.post<ApiSuccess<{ patient: Patient }>>("/auth/patient/signin", payload);
     return res.data.data;
   },
 
