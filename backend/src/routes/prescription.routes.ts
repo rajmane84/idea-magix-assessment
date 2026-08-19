@@ -1,15 +1,22 @@
 import { Router } from "express";
-import { prescriptionController } from "../controllers/prescription.controller";
+import {
+  createPrescription,
+  updatePrescription,
+  sendPrescription,
+  listPrescriptionsForPatient,
+  getPrescriptionByConsultation,
+  getPrescriptionById,
+} from "../controllers/prescription.controller";
 import { requireAuth } from "../middleware/auth";
 import { requireVerified } from "../middleware/requireVerified";
 
 const router = Router();
 
-router.post("/", requireAuth("doctor"), requireVerified(), prescriptionController.create);
-router.put("/:id", requireAuth("doctor"), requireVerified(), prescriptionController.update);
-router.post("/:id/send", requireAuth("doctor"), requireVerified(), prescriptionController.send);
-router.get("/mine", requireAuth("patient"), prescriptionController.listForPatient);
-router.get("/consultation/:consultationId", requireAuth("doctor", "patient"), prescriptionController.getByConsultation);
-router.get("/:id", requireAuth("doctor", "patient"), prescriptionController.getById);
+router.post("/", requireAuth("doctor"), requireVerified(), createPrescription);
+router.put("/:id", requireAuth("doctor"), requireVerified(), updatePrescription);
+router.post("/:id/send", requireAuth("doctor"), requireVerified(), sendPrescription);
+router.get("/mine", requireAuth("patient"), listPrescriptionsForPatient);
+router.get("/consultation/:consultationId", requireAuth("doctor", "patient"), getPrescriptionByConsultation);
+router.get("/:id", requireAuth("doctor", "patient"), getPrescriptionById);
 
 export default router;

@@ -11,9 +11,8 @@ export const doctorSignUpSchema = z.object({
   yearsOfExperience: z.coerce
     .number()
     .min(0, "Experience cannot be negative")
-    .max(80, "Please enter a valid value"),
+    .max(150, "Please enter a valid value"),
   password: z.string().min(6, "Password must be at least 6 characters"),
-  profileImage: z.string().optional().default(""),
 });
 
 export const doctorSignInSchema = z.object({

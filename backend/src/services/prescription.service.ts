@@ -1,6 +1,6 @@
 import { Prescription } from "../models/Prescription";
 import { Consultation } from "../models/Consultation";
-import { generatePrescriptionPdf } from "../utils/pdfGenerator";
+import { generatePrescriptionPdf, deletePrescriptionPdf } from "../utils/pdfGenerator";
 import { ApiError } from "../utils/ApiError";
 import type { CreatePrescriptionInput, UpdatePrescriptionInput } from "../schemas/prescription.schema";
 
@@ -12,6 +12,7 @@ async function buildAndSavePdf(prescriptionId: string) {
 
   const doctor = prescription.doctor as unknown as { name: string; specialty: string; yearsOfExperience: number };
   const patient = prescription.patient as unknown as { name: string; age: number };
+  const previousPdfPath = prescription.pdfPath;
 
   const pdfPath = await generatePrescriptionPdf({
     doctor,
@@ -23,6 +24,10 @@ async function buildAndSavePdf(prescriptionId: string) {
 
   prescription.pdfPath = pdfPath;
   await prescription.save();
+
+  // On edit, the old PDF is now orphaned - clean it up once the new one is safely saved.
+  if (previousPdfPath) await deletePrescriptionPdf(previousPdfPath);
+
   return prescription;
 }
 

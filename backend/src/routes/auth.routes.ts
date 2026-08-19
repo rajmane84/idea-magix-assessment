@@ -1,16 +1,25 @@
 import { Router } from "express";
-import { authController } from "../controllers/auth.controller";
+import {
+  registerDoctor,
+  loginDoctor,
+  registerPatient,
+  loginPatient,
+  logout,
+  me,
+  verifyOtp,
+  resendOtp,
+} from "../controllers/auth.controller";
 import { requireAuth } from "../middleware/auth";
 
 const router = Router();
 
-router.post("/doctor/signup", authController.registerDoctor);
-router.post("/doctor/signin", authController.loginDoctor);
-router.post("/patient/signup", authController.registerPatient);
-router.post("/patient/signin", authController.loginPatient);
-router.post("/logout", authController.logout);
-router.get("/me", requireAuth(), authController.me);
-router.post("/verify-otp", requireAuth(), authController.verifyOtp);
-router.post("/resend-otp", requireAuth(), authController.resendOtp);
+router.post("/doctor/signup", registerDoctor);
+router.post("/doctor/signin", loginDoctor);
+router.post("/patient/signup", registerPatient);
+router.post("/patient/signin", loginPatient);
+router.post("/logout", logout);
+router.get("/me", requireAuth(), me);
+router.post("/verify-otp", requireAuth(), verifyOtp);
+router.post("/resend-otp", requireAuth(), resendOtp);
 
 export default router;

@@ -1,9 +1,9 @@
 import { Router } from "express";
-import { doctorController } from "../controllers/doctor.controller";
+import { listDoctors, getDoctorById } from "../controllers/doctor.controller";
 
 const router = Router();
 
-router.get("/", doctorController.list);
-router.get("/:id", doctorController.getById);
+router.get("/", listDoctors);
+router.get("/:id", getDoctorById);
 
 export default router;

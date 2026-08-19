@@ -85,3 +85,12 @@ export async function generatePrescriptionPdf(data: PrescriptionPdfInput): Promi
 
   return `/uploads/prescriptions/${fileName}`;
 }
+
+/** Deletes a previously generated prescription PDF (e.g. before replacing it on edit). No-op if it's already gone. */
+export async function deletePrescriptionPdf(pdfPath: string): Promise<void> {
+  if (!pdfPath) return;
+  const filePath = path.join(PRESCRIPTION_DIR, path.basename(pdfPath));
+  await fs.unlink(filePath).catch((err) => {
+    if (err.code !== "ENOENT") console.error(`Failed to delete prescription PDF at ${filePath}`, err);
+  });
+}

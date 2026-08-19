@@ -1,10 +1,10 @@
 import { Router } from "express";
-import { uploadController } from "../controllers/upload.controller";
-import { uploadProfileImage } from "../middleware/upload";
+import { uploadProfileImage as handleProfileImageUpload, deleteProfileImage } from "../controllers/upload.controller";
+import { uploadProfileImage as uploadProfileImageMiddleware } from "../middleware/upload";
 
 const router = Router();
 
-router.post("/profile-image", uploadProfileImage.single("image"), uploadController.uploadProfileImage);
-router.delete("/profile-image", uploadController.deleteProfileImage);
+router.post("/profile-image", uploadProfileImageMiddleware.single("image"), handleProfileImageUpload);
+router.delete("/profile-image", deleteProfileImage);
 
 export default router;

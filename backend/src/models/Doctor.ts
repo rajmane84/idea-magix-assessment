@@ -1,4 +1,5 @@
 import { Schema, model, type InferSchemaType } from "mongoose";
+import { hashPassword } from "../utils/password";
 
 const doctorSchema = new Schema(
   {
@@ -12,9 +13,19 @@ const doctorSchema = new Schema(
     isVerified: { type: Boolean, default: false },
     otpCodeHash: { type: String, select: false, default: null },
     otpExpiresAt: { type: Date, select: false, default: null },
+    otpAttempts: { type: Number, select: false, default: 0 },
   },
   { timestamps: true }
 );
+
+// Only re-hash when the password field itself changes, since .save() is also
+// called for unrelated updates (OTP issuance/verification, etc.) - hashing an
+// already-hashed value on every save would corrupt it.
+doctorSchema.pre("save", async function (next) {
+  if (!this.isModified("password")) return next();
+  this.password = await hashPassword(this.password);
+  next();
+});
 
 export type DoctorDocument = InferSchemaType<typeof doctorSchema>;
 
