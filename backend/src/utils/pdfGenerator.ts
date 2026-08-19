@@ -1,12 +1,6 @@
 import PDFDocument from "pdfkit";
-import path from "node:path";
-import fs from "node:fs/promises";
-import fsSync from "node:fs";
-import { nanoid } from "nanoid";
 import type { DoctorDocument } from "../models/Doctor";
 import type { PatientDocument } from "../models/Patient";
-
-const PRESCRIPTION_DIR = path.join(process.cwd(), "uploads", "prescriptions");
 
 interface Medicine {
   name: string;
@@ -23,18 +17,11 @@ interface PrescriptionPdfInput {
   createdAt: Date;
 }
 
-/**
- * Renders a prescription PDF to disk and returns its relative public path.
- * Re-generated on every save so edited prescriptions produce a fresh file.
- */
-export async function generatePrescriptionPdf(data: PrescriptionPdfInput): Promise<string> {
-  await fs.mkdir(PRESCRIPTION_DIR, { recursive: true });
-  const fileName = `prescription-${nanoid()}.pdf`;
-  const filePath = path.join(PRESCRIPTION_DIR, fileName);
-
+/** Renders a prescription PDF and returns it as an in-memory buffer, ready to upload to Cloudinary. */
+export async function generatePrescriptionPdf(data: PrescriptionPdfInput): Promise<Buffer> {
   const doc = new PDFDocument({ margin: 50, size: "A4" });
-  const writeStream = fsSync.createWriteStream(filePath);
-  doc.pipe(writeStream);
+  const chunks: Buffer[] = [];
+  doc.on("data", (chunk: Buffer) => chunks.push(chunk));
 
   doc.fontSize(20).text("Medical Prescription", { align: "center" });
   doc.moveDown();
@@ -76,21 +63,12 @@ export async function generatePrescriptionPdf(data: PrescriptionPdfInput): Promi
   doc.moveDown(2);
   doc.fontSize(9).fillColor("#888").text("This is a digitally generated prescription.", { align: "center" });
 
+  const donePromise = new Promise<Buffer>((resolve, reject) => {
+    doc.on("end", () => resolve(Buffer.concat(chunks)));
+    doc.on("error", reject);
+  });
+
   doc.end();
 
-  await new Promise<void>((resolve, reject) => {
-    writeStream.on("finish", () => resolve());
-    writeStream.on("error", reject);
-  });
-
-  return `/uploads/prescriptions/${fileName}`;
-}
-
-/** Deletes a previously generated prescription PDF (e.g. before replacing it on edit). No-op if it's already gone. */
-export async function deletePrescriptionPdf(pdfPath: string): Promise<void> {
-  if (!pdfPath) return;
-  const filePath = path.join(PRESCRIPTION_DIR, path.basename(pdfPath));
-  await fs.unlink(filePath).catch((err) => {
-    if (err.code !== "ENOENT") console.error(`Failed to delete prescription PDF at ${filePath}`, err);
-  });
+  return donePromise;
 }

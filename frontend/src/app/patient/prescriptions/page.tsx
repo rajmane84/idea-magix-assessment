@@ -4,11 +4,10 @@ import { useRequireRole } from "@/hooks/use-require-role";
 import { useMyPrescriptionsAsPatient } from "@/hooks/use-prescriptions";
 import { Card, CardContent } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
+import { PdfPreviewDialog } from "@/components/shared/pdf-preview-dialog";
 import { resolveAssetUrl } from "@/lib/api-client";
 import { format } from "date-fns";
-import { Download } from "lucide-react";
 import type { Doctor } from "@/types";
 
 export default function PatientPrescriptionsPage() {
@@ -56,22 +55,16 @@ export default function PatientPrescriptionsPage() {
                       </p>
                     </div>
                   </div>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    nativeButton={false}
-                    render={
-                      <a
-                        href={resolveAssetUrl(prescription.pdfPath)}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        download
-                      />
-                    }
-                  >
-                    <Download className="h-4 w-4" />
-                    Download PDF
-                  </Button>
+                  {resolveAssetUrl(prescription.pdfPath) && (
+                    <PdfPreviewDialog
+                      url={resolveAssetUrl(prescription.pdfPath)!}
+                      downloadFilename={`Prescription-Dr-${doctor?.name ?? "Doctor"}-${format(
+                        prescription.sentAt ? new Date(prescription.sentAt) : new Date(),
+                        "yyyy-MM-dd"
+                      )}`}
+                      triggerSize="sm"
+                    />
+                  )}
                 </CardContent>
               </Card>
             );

@@ -15,6 +15,21 @@ export function resolveAssetUrl(path?: string | null): string | undefined {
   return `${ASSET_URL}${path}`;
 }
 
+export function buildDownloadUrl(url: string, filename: string): string {
+  const slug = filename
+    .normalize("NFKD")
+    .replace(/[^\w\s-]/g, "")
+    .trim()
+    .replace(/\s+/g, "-");
+
+  const uploadMarker = "/upload/";
+  const markerIndex = url.indexOf(uploadMarker);
+  if (!url.includes("res.cloudinary.com") || markerIndex === -1 || !slug) return url;
+
+  const insertAt = markerIndex + uploadMarker.length;
+  return `${url.slice(0, insertAt)}fl_attachment:${encodeURIComponent(slug)}/${url.slice(insertAt)}`;
+}
+
 export function extractErrorMessage(error: unknown): string {
   if (axios.isAxiosError(error)) {
     return (error.response?.data as { message?: string })?.message ?? error.message ?? "Something went wrong";

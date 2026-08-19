@@ -3,10 +3,11 @@ import { asyncHandler } from "../utils/asyncHandler";
 import { createPrescriptionSchema, updatePrescriptionSchema } from "../schemas/prescription.schema";
 import { Prescription } from "../models/Prescription";
 import { Consultation } from "../models/Consultation";
-import { generatePrescriptionPdf, deletePrescriptionPdf } from "../utils/pdfGenerator";
+import { generatePrescriptionPdf } from "../utils/pdfGenerator";
+import { cloudinaryService } from "../services/cloudinary.service";
 import type { AuthenticatedRequest } from "../types";
 
-/** Renders the prescription PDF, saves its path, and cleans up the previous PDF (if any) once the new one is safely saved. */
+/** Renders the prescription PDF, uploads it to Cloudinary, and cleans up the previous PDF (if any) once the new one is safely saved. */
 async function buildAndSavePdf(prescriptionId: string) {
   const prescription = await Prescription.findById(prescriptionId)
     .populate("doctor", "name specialty yearsOfExperience")
@@ -17,9 +18,9 @@ async function buildAndSavePdf(prescriptionId: string) {
 
   const doctor = prescription.doctor as unknown as { name: string; specialty: string; yearsOfExperience: number };
   const patient = prescription.patient as unknown as { name: string; age: number };
-  const previousPdfPath = prescription.pdfPath;
+  const previousPdfPublicId = prescription.pdfPublicId;
 
-  const pdfPath = await generatePrescriptionPdf({
+  const pdfBuffer = await generatePrescriptionPdf({
     doctor,
     patient,
     careToBeTaken: prescription.careToBeTaken,
@@ -27,10 +28,13 @@ async function buildAndSavePdf(prescriptionId: string) {
     createdAt: prescription.createdAt ?? new Date(),
   });
 
-  prescription.pdfPath = pdfPath;
+  const { url, publicId } = await cloudinaryService.addPrescriptionPdf(pdfBuffer);
+
+  prescription.pdfPath = url;
+  prescription.pdfPublicId = publicId;
   await prescription.save();
 
-  if (previousPdfPath) await deletePrescriptionPdf(previousPdfPath);
+  if (previousPdfPublicId) await cloudinaryService.deletePrescriptionPdf(previousPdfPublicId);
 
   return prescription;
 }

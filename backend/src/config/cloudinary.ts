@@ -8,13 +8,9 @@ cloudinary.config({
   secure: true,
 });
 
-/**
- * All app uploads live under a single root folder in the Cloudinary account
- * (configurable via CLOUDINARY_FOLDER), with a subfolder per asset type so
- * they stay organized and easy to manage/browse in the Cloudinary dashboard.
- */
 export const cloudinaryFolders = {
   profiles: `${env.cloudinary.folder}/profiles`,
+  prescriptions: `${env.cloudinary.folder}/prescriptions`,
 } as const;
 
 export { cloudinary };

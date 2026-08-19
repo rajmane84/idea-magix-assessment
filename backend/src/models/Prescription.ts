@@ -20,6 +20,7 @@ const prescriptionSchema = new Schema(
     medicines: { type: [medicineSchema], default: [] },
 
     pdfPath: { type: String, default: "" },
+    pdfPublicId: { type: String, default: "" },
     sentToPatient: { type: Boolean, default: false },
     sentAt: { type: Date, default: null },
   },

@@ -6,10 +6,15 @@ export interface CloudinaryUploadResult {
 }
 
 /** Uploads a buffer (e.g. from a Multer memory-storage file) to the given Cloudinary folder. */
-function uploadBuffer(buffer: Buffer, folder: string): Promise<CloudinaryUploadResult> {
+function uploadBuffer(
+  buffer: Buffer,
+  folder: string,
+  resourceType: "image" | "raw" = "image",
+  format?: string
+): Promise<CloudinaryUploadResult> {
   return new Promise((resolve, reject) => {
     const uploadStream = cloudinary.uploader.upload_stream(
-      { folder, resource_type: "image" },
+      { folder, resource_type: resourceType, ...(format ? { format } : {}) },
       (error, result) => {
         if (error || !result) {
           return reject(error ?? new Error("Cloudinary upload failed"));
@@ -22,8 +27,8 @@ function uploadBuffer(buffer: Buffer, folder: string): Promise<CloudinaryUploadR
 }
 
 /** Removes a previously uploaded asset by its Cloudinary public ID. */
-async function deleteAsset(publicId: string): Promise<void> {
-  const result = await cloudinary.uploader.destroy(publicId, { resource_type: "image" });
+async function deleteAsset(publicId: string, resourceType: "image" | "raw" = "image"): Promise<void> {
+  const result = await cloudinary.uploader.destroy(publicId, { resource_type: resourceType });
   if (result.result !== "ok" && result.result !== "not found") {
     throw new Error(`Cloudinary deletion failed for ${publicId}: ${result.result}`);
   }
@@ -44,5 +49,21 @@ export const cloudinaryService = {
       throw new Error("Invalid image reference");
     }
     await deleteAsset(publicId);
+  },
+
+  async addPrescriptionPdf(buffer: Buffer): Promise<CloudinaryUploadResult> {
+    try {
+      return await uploadBuffer(buffer, cloudinaryFolders.prescriptions, "raw", "pdf");
+    } catch (err) {
+      console.error("Failed to upload prescription PDF to Cloudinary", err);
+      throw new Error("Failed to upload prescription PDF. Please try again.");
+    }
+  },
+
+  async deletePrescriptionPdf(publicId: string): Promise<void> {
+    if (!publicId.startsWith(`${cloudinaryFolders.prescriptions}/`)) {
+      throw new Error("Invalid PDF reference");
+    }
+    await deleteAsset(publicId, "raw");
   },
 };

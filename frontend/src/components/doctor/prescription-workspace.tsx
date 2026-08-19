@@ -10,15 +10,18 @@ import {
   useSendPrescription,
 } from "@/hooks/use-prescriptions";
 import { ConsultationDetails } from "@/components/doctor/consultation-details";
+import { format } from "date-fns";
+import type { Patient } from "@/types";
 import { PrescriptionForm } from "@/components/doctor/prescription-form";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Separator } from "@/components/ui/separator";
+import { PdfPreviewDialog } from "@/components/shared/pdf-preview-dialog";
 import { resolveAssetUrl } from "@/lib/api-client";
 import type { PrescriptionFormValues } from "@/lib/validation/prescription";
-import { Download, Pencil, Send, Loader2 } from "lucide-react";
+import { Pencil, Send, Loader2 } from "lucide-react";
 
 export function PrescriptionWorkspace({ consultationId }: { consultationId: string }) {
   const { isReady } = useRequireRole("doctor", "/doctor/signin");
@@ -103,21 +106,15 @@ export function PrescriptionWorkspace({ consultationId }: { consultationId: stri
                 <Pencil className="h-4 w-4" />
                 Edit
               </Button>
-              <Button
-                variant="outline"
-                nativeButton={false}
-                render={
-                  <a
-                    href={resolveAssetUrl(prescription.pdfPath)}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    download
-                  />
-                }
-              >
-                <Download className="h-4 w-4" />
-                Download PDF
-              </Button>
+              {resolveAssetUrl(prescription.pdfPath) && (
+                <PdfPreviewDialog
+                  url={resolveAssetUrl(prescription.pdfPath)!}
+                  downloadFilename={`Prescription-${(consultation?.patient as Patient)?.name ?? "Patient"}-${format(
+                    prescription.createdAt ? new Date(prescription.createdAt) : new Date(),
+                    "yyyy-MM-dd"
+                  )}`}
+                />
+              )}
               <Button
                 onClick={() => sendPrescription.mutate(prescription._id)}
                 disabled={sendPrescription.isPending}
