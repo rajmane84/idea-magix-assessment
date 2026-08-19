@@ -8,16 +8,10 @@ const authTokenPayloadSchema = z.object({
   role: z.enum(["doctor", "patient"]),
 });
 
-export function signToken(payload: AuthTokenPayload): string {
+export function generateToken(payload: AuthTokenPayload): string {
   return jwt.sign(payload, env.jwtSecret, { expiresIn: env.jwtExpiresIn as jwt.SignOptions["expiresIn"] });
 }
 
-/**
- * Verifies the signature AND shape of the token. A validly-signed token with
- * a malformed/legacy payload (e.g. a non-ObjectId id, or an unexpected role)
- * is rejected here rather than trusted downstream, where it could otherwise
- * cause an uncaught Mongoose CastError or route to the wrong role's logic.
- */
 export function verifyToken(token: string): AuthTokenPayload {
   const decoded = jwt.verify(token, env.jwtSecret);
   return authTokenPayloadSchema.parse(decoded);

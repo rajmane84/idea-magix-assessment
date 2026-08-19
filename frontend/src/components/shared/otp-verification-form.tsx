@@ -11,12 +11,30 @@ import { useVerifyOtp, useResendOtp } from "@/hooks/use-auth";
 import { verifyOtpSchema, type VerifyOtpValues } from "@/lib/validation/auth";
 import { Loader2, MailCheck } from "lucide-react";
 
-const RESEND_COOLDOWN_SECONDS = 30;
+const RESEND_COOLDOWN_SECONDS = 60;
+
+// Cooldown is anchored to a wall-clock deadline in localStorage, not a
+// plain counter, so a page refresh or remount doesn't reset the timer.
+function cooldownStorageKey(email?: string) {
+  return `otp-resend-until:${email ?? "unknown"}`;
+}
+
+function readStoredCooldown(email?: string) {
+  if (typeof window === "undefined") return 0;
+  const until = Number(window.localStorage.getItem(cooldownStorageKey(email)) ?? 0);
+  return Math.max(Math.ceil((until - Date.now()) / 1000), 0);
+}
+
+function startCooldown(email?: string) {
+  const until = Date.now() + RESEND_COOLDOWN_SECONDS * 1000;
+  window.localStorage.setItem(cooldownStorageKey(email), String(until));
+  return RESEND_COOLDOWN_SECONDS;
+}
 
 export function OtpVerificationForm({ email }: { email?: string }) {
   const { mutate: verifyOtp, isPending: isVerifying } = useVerifyOtp();
   const { mutate: resendOtp, isPending: isResending } = useResendOtp();
-  const [cooldown, setCooldown] = useState(0);
+  const [cooldown, setCooldown] = useState(() => readStoredCooldown(email) || RESEND_COOLDOWN_SECONDS);
 
   const {
     control,
@@ -28,13 +46,17 @@ export function OtpVerificationForm({ email }: { email?: string }) {
   });
 
   useEffect(() => {
+    if (!readStoredCooldown(email)) startCooldown(email);
+  }, [email]);
+
+  useEffect(() => {
     if (cooldown <= 0) return;
-    const timer = setInterval(() => setCooldown((c) => Math.max(c - 1, 0)), 1000);
+    const timer = setInterval(() => setCooldown(readStoredCooldown(email)), 1000);
     return () => clearInterval(timer);
-  }, [cooldown]);
+  }, [cooldown, email]);
 
   function handleResend() {
-    resendOtp(undefined, { onSuccess: () => setCooldown(RESEND_COOLDOWN_SECONDS) });
+    resendOtp(undefined, { onSuccess: () => setCooldown(startCooldown(email)) });
   }
 
   return (

@@ -22,7 +22,11 @@ export const doctorSignInSchema = z.object({
 
 export const patientSignUpSchema = z.object({
   name: z.string().trim().min(2, "Name must be at least 2 characters"),
-  age: z.coerce.number().int().min(0).max(150),
+  age: z.coerce
+    .number()
+    .int("Age must be a whole number")
+    .min(0, "Age cannot be negative")
+    .max(150, "Please enter a valid age"),
   email,
   phone: z.string().trim().regex(phoneRegex, "Invalid phone number"),
   surgeryHistory: z.string().trim().optional().default(""),
@@ -38,7 +42,6 @@ export const patientSignUpSchema = z.object({
         .filter(Boolean)
     ),
   password: z.string().min(6, "Password must be at least 6 characters"),
-  profileImage: z.string().optional().default(""),
 });
 
 export const patientSignInSchema = z.object({
