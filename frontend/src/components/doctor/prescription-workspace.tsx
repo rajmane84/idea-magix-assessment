@@ -10,8 +10,6 @@ import {
   useSendPrescription,
 } from "@/hooks/use-prescriptions";
 import { ConsultationDetails } from "@/components/doctor/consultation-details";
-import { format } from "date-fns";
-import type { Patient } from "@/types";
 import { PrescriptionForm } from "@/components/doctor/prescription-form";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -106,13 +104,7 @@ export function PrescriptionWorkspace({ consultationId }: { consultationId: stri
                 Edit
               </Button>
               {prescription.pdfPath && (
-                <PdfPreviewDialog
-                  url={prescription.pdfPath}
-                  downloadFilename={`Prescription-${(consultation?.patient as Patient)?.name ?? "Patient"}-${format(
-                    prescription.createdAt ? new Date(prescription.createdAt) : new Date(),
-                    "yyyy-MM-dd"
-                  )}`}
-                />
+                <PdfPreviewDialog url={prescription.pdfPath} />
               )}
               <Button
                 onClick={() => sendPrescription.mutate(prescription._id)}

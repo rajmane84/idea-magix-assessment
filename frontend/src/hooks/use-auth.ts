@@ -97,12 +97,16 @@ export function useResendOtp() {
 
 export function useLogout() {
   const { logout } = useSession();
-  const router = useRouter();
 
   return () => {
     logout();
     authService.logout().catch(() => undefined);
     toast.success("Logged out");
-    router.push("/");
+    // Hard navigation: the page you're logging out from is usually role-guarded
+    // (useRequireRole), and its redirect effect fires as soon as session.role
+    // clears. A client-side router.push() races that effect and can lose,
+    // bouncing you to its signin page instead of home. A full reload tears
+    // down that component before its effect gets a chance to run.
+    window.location.href = "/";
   };
 }

@@ -63,14 +63,7 @@ export default function PatientPrescriptionsPage() {
                       </div>
                     </div>
                     {prescription.pdfPath && (
-                      <PdfPreviewDialog
-                        url={prescription.pdfPath}
-                        downloadFilename={`Prescription-Dr-${doctor?.name ?? "Doctor"}-${format(
-                          prescription.sentAt ? new Date(prescription.sentAt) : new Date(),
-                          "yyyy-MM-dd"
-                        )}`}
-                        triggerSize="sm"
-                      />
+                      <PdfPreviewDialog url={prescription.pdfPath} triggerSize="sm" />
                     )}
                   </CardContent>
                 </Card>
