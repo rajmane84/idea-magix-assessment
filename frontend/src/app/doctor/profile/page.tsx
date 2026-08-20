@@ -6,7 +6,6 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { ButtonLink } from "@/components/shared/button-link";
 import { Separator } from "@/components/ui/separator";
-import { resolveAssetUrl } from "@/lib/api-client";
 import { FileText, Mail, Phone, Briefcase } from "lucide-react";
 
 export default function DoctorProfilePage() {
@@ -19,7 +18,7 @@ export default function DoctorProfilePage() {
       <Card>
         <CardHeader className="items-center text-center">
           <Avatar className="h-24 w-24">
-            <AvatarImage src={resolveAssetUrl(doctor.profileImage)} alt={doctor.name} />
+            <AvatarImage src={doctor.profileImage} alt={doctor.name} />
             <AvatarFallback className="text-2xl">{doctor.name.charAt(0)}</AvatarFallback>
           </Avatar>
           <h1 className="text-xl font-bold">Dr. {doctor.name}</h1>

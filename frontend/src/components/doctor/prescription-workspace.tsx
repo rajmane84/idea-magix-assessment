@@ -19,7 +19,6 @@ import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Separator } from "@/components/ui/separator";
 import { PdfPreviewDialog } from "@/components/shared/pdf-preview-dialog";
-import { resolveAssetUrl } from "@/lib/api-client";
 import type { PrescriptionFormValues } from "@/lib/validation/prescription";
 import { Pencil, Send, Loader2 } from "lucide-react";
 
@@ -106,9 +105,9 @@ export function PrescriptionWorkspace({ consultationId }: { consultationId: stri
                 <Pencil className="h-4 w-4" />
                 Edit
               </Button>
-              {resolveAssetUrl(prescription.pdfPath) && (
+              {prescription.pdfPath && (
                 <PdfPreviewDialog
-                  url={resolveAssetUrl(prescription.pdfPath)!}
+                  url={prescription.pdfPath}
                   downloadFilename={`Prescription-${(consultation?.patient as Patient)?.name ?? "Patient"}-${format(
                     prescription.createdAt ? new Date(prescription.createdAt) : new Date(),
                     "yyyy-MM-dd"

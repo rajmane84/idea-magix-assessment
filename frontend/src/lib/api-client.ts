@@ -1,19 +1,11 @@
 import axios from "axios";
 
 export const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:5000/api";
-export const ASSET_URL = process.env.NEXT_PUBLIC_ASSET_URL ?? "http://localhost:5000";
 
 export const apiClient = axios.create({
   baseURL: API_URL,
   withCredentials: true,
 });
-
-/** Resolves a relative `/uploads/...` path returned by the API into an absolute URL. */
-export function resolveAssetUrl(path?: string | null): string | undefined {
-  if (!path) return undefined;
-  if (path.startsWith("http") || path.startsWith("data:")) return path;
-  return `${ASSET_URL}${path}`;
-}
 
 export function buildDownloadUrl(url: string, filename: string): string {
   const slug = filename

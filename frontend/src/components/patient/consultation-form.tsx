@@ -21,7 +21,6 @@ import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Skeleton } from "@/components/ui/skeleton";
-import { resolveAssetUrl } from "@/lib/api-client";
 import { RequiredMark } from "@/components/shared/required-mark";
 import { Loader2, CheckCircle2 } from "lucide-react";
 import Image from "next/image";
@@ -237,7 +236,7 @@ export function ConsultationForm({ doctorId }: { doctorId: string }) {
                     <Skeleton className="h-48 w-48" />
                   ) : paymentInfo ? (
                     <Image
-                      src={resolveAssetUrl(paymentInfo.qrCodeImage) ?? ""}
+                      src={paymentInfo.qrCodeImage}
                       alt="Payment QR Code"
                       width={192}
                       height={192}

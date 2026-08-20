@@ -8,7 +8,6 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
 import { PdfPreviewDialog } from "@/components/shared/pdf-preview-dialog";
-import { resolveAssetUrl } from "@/lib/api-client";
 import { format } from "date-fns";
 import type { Doctor } from "@/types";
 
@@ -52,7 +51,7 @@ export default function PatientPrescriptionsPage() {
                   <CardContent className="flex flex-col items-start justify-between gap-3 sm:flex-row sm:items-center">
                     <div className="flex items-center gap-3">
                       <Avatar className="h-11 w-11">
-                        <AvatarImage src={resolveAssetUrl(doctor?.profileImage)} alt={doctor?.name} />
+                        <AvatarImage src={doctor?.profileImage} alt={doctor?.name} />
                         <AvatarFallback>{doctor?.name?.charAt(0) ?? "?"}</AvatarFallback>
                       </Avatar>
                       <div>
@@ -63,9 +62,9 @@ export default function PatientPrescriptionsPage() {
                         </p>
                       </div>
                     </div>
-                    {resolveAssetUrl(prescription.pdfPath) && (
+                    {prescription.pdfPath && (
                       <PdfPreviewDialog
-                        url={resolveAssetUrl(prescription.pdfPath)!}
+                        url={prescription.pdfPath}
                         downloadFilename={`Prescription-Dr-${doctor?.name ?? "Doctor"}-${format(
                           prescription.sentAt ? new Date(prescription.sentAt) : new Date(),
                           "yyyy-MM-dd"

@@ -4,7 +4,6 @@ import { useRef, useState } from "react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { useUploadProfileImage, useDeleteProfileImage } from "@/hooks/use-upload";
-import { resolveAssetUrl } from "@/lib/api-client";
 import { Loader2, Upload } from "lucide-react";
 
 interface ProfileImageUploadProps {
@@ -35,7 +34,7 @@ export function ProfileImageUpload({ value, onChange, fallback = "?" }: ProfileI
     onChange(uploaded.url);
   }
 
-  const displayUrl = previewUrl ?? resolveAssetUrl(value);
+  const displayUrl = previewUrl ?? (value || undefined);
 
   return (
     <div className="flex flex-col items-center gap-3">

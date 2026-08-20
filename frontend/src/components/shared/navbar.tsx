@@ -6,7 +6,6 @@ import { useSession } from "@/providers/session-provider";
 import { useLogout } from "@/hooks/use-auth";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { resolveAssetUrl } from "@/lib/api-client";
 import { Stethoscope } from "lucide-react";
 
 export function Navbar() {
@@ -30,7 +29,7 @@ export function Navbar() {
         {isHydrated && role && !isVerifyOtpPage && (
           <div className="flex items-center gap-3">
             <Avatar className="h-8 w-8">
-              <AvatarImage src={resolveAssetUrl(image)} alt={name} />
+              <AvatarImage src={image} alt={name} />
               <AvatarFallback>{name?.charAt(0) ?? "?"}</AvatarFallback>
             </Avatar>
             <span className="hidden text-sm font-medium sm:inline">{name}</span>
