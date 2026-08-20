@@ -13,15 +13,18 @@ import { Loader2, MailCheck } from "lucide-react";
 
 const RESEND_COOLDOWN_SECONDS = 60;
 
-// Cooldown is anchored to a wall-clock deadline in localStorage, not a
-// plain counter, so a page refresh or remount doesn't reset the timer.
 function cooldownStorageKey(email?: string) {
   return `otp-resend-until:${email ?? "unknown"}`;
 }
 
-function readStoredCooldown(email?: string) {
-  if (typeof window === "undefined") return 0;
-  const until = Number(window.localStorage.getItem(cooldownStorageKey(email)) ?? 0);
+function readStoredUntil(email?: string): number | null {
+  if (typeof window === "undefined") return null;
+  const raw = window.localStorage.getItem(cooldownStorageKey(email));
+  return raw === null ? null : Number(raw);
+}
+
+function remainingSeconds(until: number | null) {
+  if (until === null) return 0;
   return Math.max(Math.ceil((until - Date.now()) / 1000), 0);
 }
 
@@ -34,7 +37,10 @@ function startCooldown(email?: string) {
 export function OtpVerificationForm({ email }: { email?: string }) {
   const { mutate: verifyOtp, isPending: isVerifying } = useVerifyOtp();
   const { mutate: resendOtp, isPending: isResending } = useResendOtp();
-  const [cooldown, setCooldown] = useState(() => readStoredCooldown(email) || RESEND_COOLDOWN_SECONDS);
+  const [cooldown, setCooldown] = useState(() => {
+    const until = readStoredUntil(email);
+    return until === null ? RESEND_COOLDOWN_SECONDS : remainingSeconds(until);
+  });
 
   const {
     control,
@@ -46,12 +52,12 @@ export function OtpVerificationForm({ email }: { email?: string }) {
   });
 
   useEffect(() => {
-    if (!readStoredCooldown(email)) startCooldown(email);
+    if (readStoredUntil(email) === null) startCooldown(email);
   }, [email]);
 
   useEffect(() => {
     if (cooldown <= 0) return;
-    const timer = setInterval(() => setCooldown(readStoredCooldown(email)), 1000);
+    const timer = setInterval(() => setCooldown(remainingSeconds(readStoredUntil(email))), 1000);
     return () => clearInterval(timer);
   }, [cooldown, email]);
 

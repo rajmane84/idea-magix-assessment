@@ -12,6 +12,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { ProfileImageUpload } from "@/components/shared/profile-image-upload";
 import { PasswordInput } from "@/components/shared/password-input";
 import { useDoctorSignUp } from "@/hooks/use-auth";
+import { useRedirectIfAuthenticated } from "@/hooks/use-redirect-if-authenticated";
 import { useUploadProfileImage } from "@/hooks/use-upload";
 import { doctorSignUpSchema, type DoctorSignUpValues } from "@/lib/validation/auth";
 import { emptyStringToUndefined } from "@/lib/validation/common";
@@ -20,6 +21,7 @@ import { SPECIALTIES, OTHER_SPECIALTY } from "@/lib/constants/specialties";
 import { Loader2 } from "lucide-react";
 
 export default function DoctorSignUpPage() {
+  const { isReady } = useRedirectIfAuthenticated();
   const [profileImageFile, setProfileImageFile] = useState<File | null>(null);
   const [specialtyOption, setSpecialtyOption] = useState("");
   const { mutate, isPending: isSigningUp } = useDoctorSignUp();
@@ -53,6 +55,8 @@ export default function DoctorSignUpPage() {
   }
 
   const isPending = isUploading || isSigningUp;
+
+  if (!isReady) return null;
 
   return (
     <div className="flex flex-1 items-center justify-center px-4 py-10">

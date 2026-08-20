@@ -8,18 +8,22 @@ import { Field, FieldError, FieldGroup, FieldLabel } from "@/components/ui/field
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { usePatientSignIn } from "@/hooks/use-auth";
+import { useRedirectIfAuthenticated } from "@/hooks/use-redirect-if-authenticated";
 import { patientSignInSchema, type PatientSignInValues } from "@/lib/validation/auth";
 import { RequiredMark } from "@/components/shared/required-mark";
 import { PasswordInput } from "@/components/shared/password-input";
 import { Loader2 } from "lucide-react";
 
 export default function PatientSignInPage() {
+  const { isReady } = useRedirectIfAuthenticated();
   const { mutate, isPending } = usePatientSignIn();
   const {
     register,
     handleSubmit,
     formState: { errors },
   } = useForm<PatientSignInValues>({ resolver: zodResolver(patientSignInSchema) });
+
+  if (!isReady) return null;
 
   return (
     <div className="flex flex-1 items-center justify-center px-4 py-10">

@@ -12,6 +12,7 @@ import { Button } from "@/components/ui/button";
 import { ProfileImageUpload } from "@/components/shared/profile-image-upload";
 import { IllnessTagInput } from "@/components/shared/illness-tag-input";
 import { usePatientSignUp } from "@/hooks/use-auth";
+import { useRedirectIfAuthenticated } from "@/hooks/use-redirect-if-authenticated";
 import { useUploadProfileImage } from "@/hooks/use-upload";
 import { patientSignUpSchema, type PatientSignUpValues } from "@/lib/validation/auth";
 import { emptyStringToUndefined } from "@/lib/validation/common";
@@ -20,6 +21,7 @@ import { PasswordInput } from "@/components/shared/password-input";
 import { Loader2 } from "lucide-react";
 
 export default function PatientSignUpPage() {
+  const { isReady } = useRedirectIfAuthenticated();
   const [profileImageFile, setProfileImageFile] = useState<File | null>(null);
   const { mutate, isPending: isSigningUp } = usePatientSignUp();
   const { mutateAsync: uploadImage, isPending: isUploading } = useUploadProfileImage();
@@ -54,6 +56,8 @@ export default function PatientSignUpPage() {
   }
 
   const isPending = isUploading || isSigningUp;
+
+  if (!isReady) return null;
 
   return (
     <div className="flex flex-1 items-center justify-center px-4 py-10">

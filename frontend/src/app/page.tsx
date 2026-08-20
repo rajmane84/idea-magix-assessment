@@ -1,8 +1,15 @@
+"use client";
+
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { ButtonLink } from "@/components/shared/button-link";
+import { useRedirectIfAuthenticated } from "@/hooks/use-redirect-if-authenticated";
 import { Stethoscope, User } from "lucide-react";
 
 export default function Home() {
+  const { isReady } = useRedirectIfAuthenticated();
+
+  if (!isReady) return null;
+
   return (
     <div className="flex flex-1 flex-col items-center justify-center px-4 py-16">
       <div className="mb-10 text-center">
