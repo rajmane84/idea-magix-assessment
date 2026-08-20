@@ -1,0 +1,1207 @@
+openapi: 3.0.3
+info:
+  title: Prescripto API
+  description: >
+    API for the Prescripto platform — doctor/patient auth with OTP verification,
+    doctor discovery, consultation submission, prescription management, and
+    profile image uploads.
+  version: "1.0.0"
+servers:
+  - url: http://localhost:5000/api
+    description: Local development server
+
+tags:
+  - name: Auth
+    description: Registration, login, OTP verification, and session management for doctors and patients
+  - name: Doctors
+    description: Doctor discovery endpoints (patient-only)
+  - name: Consultations
+    description: Consultation submission and retrieval
+  - name: Prescriptions
+    description: Prescription creation, editing, sending, and retrieval
+  - name: Uploads
+    description: Profile image upload/delete via Cloudinary
+
+paths:
+  /auth/doctor/signup:
+    post:
+      tags: [Auth]
+      summary: Register a new doctor
+      description: Creates a doctor account, issues an OTP email, and sets the auth cookie.
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/DoctorSignUpRequest"
+      responses:
+        "201":
+          description: Account created successfully
+          headers:
+            Set-Cookie:
+              schema:
+                type: string
+                example: token=eyJhbGciOi...; HttpOnly; SameSite=Lax
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/SuccessEnvelope"
+                  - type: object
+                    properties:
+                      data:
+                        type: object
+                        properties:
+                          doctor:
+                            $ref: "#/components/schemas/Doctor"
+        "400":
+          $ref: "#/components/responses/ValidationError"
+        "409":
+          $ref: "#/components/responses/DuplicateError"
+        "429":
+          $ref: "#/components/responses/RateLimited"
+
+  /auth/doctor/signin:
+    post:
+      tags: [Auth]
+      summary: Log in as a doctor
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SignInRequest"
+      responses:
+        "200":
+          description: Logged in successfully
+          headers:
+            Set-Cookie:
+              schema:
+                type: string
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/SuccessEnvelope"
+                  - type: object
+                    properties:
+                      data:
+                        type: object
+                        properties:
+                          doctor:
+                            $ref: "#/components/schemas/Doctor"
+        "400":
+          $ref: "#/components/responses/ValidationError"
+        "401":
+          description: Invalid email or password
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+        "429":
+          $ref: "#/components/responses/RateLimited"
+
+  /auth/patient/signup:
+    post:
+      tags: [Auth]
+      summary: Register a new patient
+      description: Creates a patient account, issues an OTP email, and sets the auth cookie.
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PatientSignUpRequest"
+      responses:
+        "201":
+          description: Account created successfully
+          headers:
+            Set-Cookie:
+              schema:
+                type: string
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/SuccessEnvelope"
+                  - type: object
+                    properties:
+                      data:
+                        type: object
+                        properties:
+                          patient:
+                            $ref: "#/components/schemas/Patient"
+        "400":
+          $ref: "#/components/responses/ValidationError"
+        "409":
+          $ref: "#/components/responses/DuplicateError"
+        "429":
+          $ref: "#/components/responses/RateLimited"
+
+  /auth/patient/signin:
+    post:
+      tags: [Auth]
+      summary: Log in as a patient
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SignInRequest"
+      responses:
+        "200":
+          description: Logged in successfully
+          headers:
+            Set-Cookie:
+              schema:
+                type: string
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/SuccessEnvelope"
+                  - type: object
+                    properties:
+                      data:
+                        type: object
+                        properties:
+                          patient:
+                            $ref: "#/components/schemas/Patient"
+        "400":
+          $ref: "#/components/responses/ValidationError"
+        "401":
+          description: Invalid email or password
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+        "429":
+          $ref: "#/components/responses/RateLimited"
+
+  /auth/logout:
+    post:
+      tags: [Auth]
+      summary: Log out
+      description: Clears the auth cookie. No authentication required.
+      security: []
+      responses:
+        "200":
+          description: Logged out successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SuccessEnvelope"
+
+  /auth/me:
+    get:
+      tags: [Auth]
+      summary: Get the current authenticated user
+      responses:
+        "200":
+          description: Current user profile
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/SuccessEnvelope"
+                  - type: object
+                    properties:
+                      data:
+                        oneOf:
+                          - type: object
+                            properties:
+                              role:
+                                type: string
+                                example: doctor
+                              doctor:
+                                $ref: "#/components/schemas/Doctor"
+                          - type: object
+                            properties:
+                              role:
+                                type: string
+                                example: patient
+                              patient:
+                                $ref: "#/components/schemas/Patient"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+
+  /auth/verify-otp:
+    post:
+      tags: [Auth]
+      summary: Verify the 6-digit OTP sent to the user's email
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [code]
+              properties:
+                code:
+                  type: string
+                  pattern: '^\d{6}$'
+                  example: "123456"
+      responses:
+        "200":
+          description: Account verified successfully
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/SuccessEnvelope"
+                  - type: object
+                    properties:
+                      data:
+                        type: object
+                        properties:
+                          doctor:
+                            $ref: "#/components/schemas/Doctor"
+                          patient:
+                            $ref: "#/components/schemas/Patient"
+        "400":
+          description: Validation error, expired code, already verified, or too many attempts
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "429":
+          $ref: "#/components/responses/RateLimited"
+
+  /auth/resend-otp:
+    post:
+      tags: [Auth]
+      summary: Resend a fresh OTP code
+      description: Subject to a resend cooldown after the previous code was issued.
+      responses:
+        "200":
+          description: A new verification code has been sent to the user's email
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SuccessEnvelope"
+        "400":
+          description: Account not found, already verified, or cooldown still active
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "429":
+          $ref: "#/components/responses/RateLimited"
+
+  /doctors:
+    get:
+      tags: [Doctors]
+      summary: List doctors (patient-only, requires verified account)
+      parameters:
+        - $ref: "#/components/parameters/Page"
+        - $ref: "#/components/parameters/Limit"
+      responses:
+        "200":
+          description: Paginated list of doctors
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/SuccessEnvelope"
+                  - $ref: "#/components/schemas/PaginationEnvelope"
+                  - type: object
+                    properties:
+                      data:
+                        type: array
+                        items:
+                          $ref: "#/components/schemas/Doctor"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+
+  /doctors/{id}:
+    get:
+      tags: [Doctors]
+      summary: Get a doctor by ID (patient-only, requires verified account)
+      parameters:
+        - $ref: "#/components/parameters/DoctorId"
+      responses:
+        "200":
+          description: Doctor found
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/SuccessEnvelope"
+                  - type: object
+                    properties:
+                      data:
+                        $ref: "#/components/schemas/Doctor"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+
+  /consultations/payment-qr/{doctorId}:
+    get:
+      tags: [Consultations]
+      summary: Get a payment QR code for a consultation (patient-only, requires verified account)
+      parameters:
+        - $ref: "#/components/parameters/DoctorId"
+      responses:
+        "200":
+          description: QR code image (base64/data URI) and consultation fee amount
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/SuccessEnvelope"
+                  - type: object
+                    properties:
+                      data:
+                        type: object
+                        properties:
+                          qrCodeImage:
+                            type: string
+                            description: Data URI of the generated QR code image
+                          amount:
+                            type: number
+                            example: 500
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "429":
+          $ref: "#/components/responses/RateLimited"
+
+  /consultations:
+    post:
+      tags: [Consultations]
+      summary: Submit a new consultation (patient-only, requires verified account)
+      description: Limited to a maximum number of consultations per patient per day.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateConsultationRequest"
+      responses:
+        "201":
+          description: Consultation submitted successfully
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/SuccessEnvelope"
+                  - type: object
+                    properties:
+                      data:
+                        $ref: "#/components/schemas/Consultation"
+        "400":
+          description: Validation error, doctor not found, or daily consultation limit reached
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "429":
+          $ref: "#/components/responses/RateLimited"
+
+  /consultations/mine:
+    get:
+      tags: [Consultations]
+      summary: List the authenticated patient's consultations
+      parameters:
+        - $ref: "#/components/parameters/Page"
+        - $ref: "#/components/parameters/Limit"
+      responses:
+        "200":
+          description: Paginated list of the patient's consultations (doctor populated)
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/SuccessEnvelope"
+                  - $ref: "#/components/schemas/PaginationEnvelope"
+                  - type: object
+                    properties:
+                      data:
+                        type: array
+                        items:
+                          $ref: "#/components/schemas/Consultation"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+
+  /consultations/doctor/mine:
+    get:
+      tags: [Consultations]
+      summary: List the authenticated doctor's consultations
+      parameters:
+        - $ref: "#/components/parameters/Page"
+        - $ref: "#/components/parameters/Limit"
+      responses:
+        "200":
+          description: Paginated list of the doctor's consultations (patient populated)
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/SuccessEnvelope"
+                  - $ref: "#/components/schemas/PaginationEnvelope"
+                  - type: object
+                    properties:
+                      data:
+                        type: array
+                        items:
+                          $ref: "#/components/schemas/Consultation"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+
+  /consultations/{id}:
+    get:
+      tags: [Consultations]
+      summary: Get a consultation by ID (doctor or patient)
+      parameters:
+        - $ref: "#/components/parameters/MongoId"
+      responses:
+        "200":
+          description: Consultation found (doctor and patient populated)
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/SuccessEnvelope"
+                  - type: object
+                    properties:
+                      data:
+                        $ref: "#/components/schemas/Consultation"
+        "400":
+          description: Invalid consultation ID
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+
+  /prescriptions:
+    post:
+      tags: [Prescriptions]
+      summary: Create a prescription for a consultation (doctor-only, requires verified account)
+      description: >
+        Fails if a prescription already exists for the consultation, or if the
+        consultation does not belong to the authenticated doctor. Generates and
+        uploads a PDF to Cloudinary, and marks the consultation as "prescribed".
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreatePrescriptionRequest"
+      responses:
+        "201":
+          description: Prescription created
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/SuccessEnvelope"
+                  - type: object
+                    properties:
+                      data:
+                        $ref: "#/components/schemas/Prescription"
+        "400":
+          description: Validation error, invalid consultation ID, not your consultation, or already prescribed
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+
+  /prescriptions/{id}:
+    put:
+      tags: [Prescriptions]
+      summary: Update an existing prescription (doctor-only, requires verified account, owner only)
+      description: Regenerates and re-uploads the PDF, and resets the sent-to-patient state.
+      parameters:
+        - $ref: "#/components/parameters/MongoId"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdatePrescriptionRequest"
+      responses:
+        "200":
+          description: Prescription updated
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/SuccessEnvelope"
+                  - type: object
+                    properties:
+                      data:
+                        $ref: "#/components/schemas/Prescription"
+        "400":
+          description: Validation error, invalid ID, or not your prescription
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+
+    get:
+      tags: [Prescriptions]
+      summary: Get a prescription by ID (doctor or patient)
+      parameters:
+        - $ref: "#/components/parameters/MongoId"
+      responses:
+        "200":
+          description: Prescription found (doctor, patient, consultation populated)
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/SuccessEnvelope"
+                  - type: object
+                    properties:
+                      data:
+                        $ref: "#/components/schemas/Prescription"
+        "400":
+          description: Invalid prescription ID
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+
+  /prescriptions/{id}/send:
+    post:
+      tags: [Prescriptions]
+      summary: Send a prescription to the patient (doctor-only, requires verified account, owner only)
+      description: >
+        Marks the prescription as sent and syncs the related consultation's
+        status to "prescribed". Fails if the prescription's care instructions
+        are incomplete.
+      parameters:
+        - $ref: "#/components/parameters/MongoId"
+      responses:
+        "200":
+          description: Prescription sent to patient
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/SuccessEnvelope"
+                  - type: object
+                    properties:
+                      data:
+                        $ref: "#/components/schemas/Prescription"
+        "400":
+          description: Invalid ID, not your prescription, or incomplete prescription
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+
+  /prescriptions/mine:
+    get:
+      tags: [Prescriptions]
+      summary: List prescriptions sent to the authenticated patient
+      parameters:
+        - $ref: "#/components/parameters/Page"
+        - $ref: "#/components/parameters/Limit"
+      responses:
+        "200":
+          description: Paginated list of prescriptions that have been sent to the patient
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/SuccessEnvelope"
+                  - $ref: "#/components/schemas/PaginationEnvelope"
+                  - type: object
+                    properties:
+                      data:
+                        type: array
+                        items:
+                          $ref: "#/components/schemas/Prescription"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+
+  /prescriptions/consultation/{consultationId}:
+    get:
+      tags: [Prescriptions]
+      summary: Get the prescription for a given consultation (doctor or patient)
+      description: >
+        Returns `data: null` if no prescription exists yet, or if the requesting
+        patient's prescription has not yet been sent to them.
+      parameters:
+        - name: consultationId
+          in: path
+          required: true
+          schema:
+            type: string
+          description: MongoDB ObjectId of the consultation
+          example: 66f1a2b3c4d5e6f7a8b9c0d1
+      responses:
+        "200":
+          description: Prescription found, or null if not yet available
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/SuccessEnvelope"
+                  - type: object
+                    properties:
+                      data:
+                        nullable: true
+                        allOf:
+                          - $ref: "#/components/schemas/Prescription"
+        "400":
+          description: Invalid consultation ID
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+
+  /uploads/profile-image:
+    post:
+      tags: [Uploads]
+      summary: Upload a profile image
+      description: >
+        Accepts a single image file (JPEG, PNG, or WebP, max 5MB) and uploads it
+        to Cloudinary.
+      security: []
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required: [image]
+              properties:
+                image:
+                  type: string
+                  format: binary
+                  description: Image file (jpeg, png, webp), max 5MB
+      responses:
+        "201":
+          description: Profile image uploaded successfully
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/SuccessEnvelope"
+                  - type: object
+                    properties:
+                      data:
+                        type: object
+                        properties:
+                          url:
+                            type: string
+                            format: uri
+                          publicId:
+                            type: string
+        "400":
+          description: No file provided, invalid file type, empty file, or file too large
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+        "429":
+          $ref: "#/components/responses/RateLimited"
+
+    delete:
+      tags: [Uploads]
+      summary: Delete a profile image
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [publicId]
+              properties:
+                publicId:
+                  type: string
+      responses:
+        "200":
+          description: Profile image deleted successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SuccessEnvelope"
+        "400":
+          $ref: "#/components/responses/ValidationError"
+        "429":
+          $ref: "#/components/responses/RateLimited"
+
+components:
+  securitySchemes:
+    cookieAuth:
+      type: apiKey
+      in: cookie
+      name: token
+      description: >
+        JWT stored in an httpOnly cookie named `token`, set on signup/signin.
+        Contains `{ id, role }` where role is "doctor" or "patient".
+
+  parameters:
+    Page:
+      name: page
+      in: query
+      schema:
+        type: integer
+        minimum: 1
+        default: 1
+    Limit:
+      name: limit
+      in: query
+      schema:
+        type: integer
+        minimum: 1
+        maximum: 100
+        default: 10
+    MongoId:
+      name: id
+      in: path
+      required: true
+      schema:
+        type: string
+      description: MongoDB ObjectId
+      example: 66f1a2b3c4d5e6f7a8b9c0d1
+    DoctorId:
+      name: id
+      in: path
+      required: true
+      schema:
+        type: string
+      description: Doctor's MongoDB ObjectId
+      example: 66f1a2b3c4d5e6f7a8b9c0d1
+
+  responses:
+    ValidationError:
+      description: Validation failed
+      content:
+        application/json:
+          schema:
+            allOf:
+              - $ref: "#/components/schemas/ErrorEnvelope"
+              - type: object
+                properties:
+                  errors:
+                    type: array
+                    items:
+                      type: object
+    DuplicateError:
+      description: Email or phone number already registered
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorEnvelope"
+    Unauthorized:
+      description: Missing, invalid, or expired session
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorEnvelope"
+    Forbidden:
+      description: Authenticated but not permitted to access this resource
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorEnvelope"
+    NotFound:
+      description: Resource not found
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorEnvelope"
+    RateLimited:
+      description: Too many requests
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorEnvelope"
+
+  schemas:
+    SuccessEnvelope:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        message:
+          type: string
+
+    ErrorEnvelope:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: false
+        message:
+          type: string
+
+    PaginationEnvelope:
+      type: object
+      properties:
+        pagination:
+          type: object
+          properties:
+            page:
+              type: integer
+              example: 1
+            limit:
+              type: integer
+              example: 10
+            total:
+              type: integer
+              example: 42
+            totalPages:
+              type: integer
+              example: 5
+
+    Doctor:
+      type: object
+      properties:
+        _id:
+          type: string
+        profileImage:
+          type: string
+        name:
+          type: string
+        specialty:
+          type: string
+        email:
+          type: string
+          format: email
+        phone:
+          type: string
+        yearsOfExperience:
+          type: number
+        isVerified:
+          type: boolean
+        isActive:
+          type: boolean
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+
+    Patient:
+      type: object
+      properties:
+        _id:
+          type: string
+        profileImage:
+          type: string
+        name:
+          type: string
+        age:
+          type: number
+        email:
+          type: string
+          format: email
+        phone:
+          type: string
+        surgeryHistory:
+          type: string
+        illnessHistory:
+          type: array
+          items:
+            type: string
+        isVerified:
+          type: boolean
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+
+    DoctorSignUpRequest:
+      type: object
+      required: [name, specialty, email, phone, yearsOfExperience, password]
+      properties:
+        name:
+          type: string
+          minLength: 2
+        specialty:
+          type: string
+          minLength: 2
+        email:
+          type: string
+          format: email
+        phone:
+          type: string
+          description: 7-15 characters, digits/+/-/spaces/parentheses
+          example: "+1 555-123-4567"
+        yearsOfExperience:
+          type: number
+          minimum: 0
+          maximum: 150
+        password:
+          type: string
+          minLength: 6
+          format: password
+
+    PatientSignUpRequest:
+      type: object
+      required: [name, age, email, phone, password]
+      properties:
+        name:
+          type: string
+          minLength: 2
+        age:
+          type: integer
+          minimum: 0
+          maximum: 150
+        email:
+          type: string
+          format: email
+        phone:
+          type: string
+          example: "+1 555-123-4567"
+        surgeryHistory:
+          type: string
+          default: ""
+        illnessHistory:
+          type: string
+          default: ""
+          description: Comma-separated list, split into an array server-side (e.g. "asthma, diabetes")
+        password:
+          type: string
+          minLength: 6
+          format: password
+
+    SignInRequest:
+      type: object
+      required: [email, password]
+      properties:
+        email:
+          type: string
+          format: email
+        password:
+          type: string
+          format: password
+
+    CreateConsultationRequest:
+      type: object
+      required: [doctorId, currentIllnessHistory, diabetesStatus, transactionId]
+      properties:
+        doctorId:
+          type: string
+        currentIllnessHistory:
+          type: string
+          minLength: 3
+        hadRecentSurgery:
+          type: boolean
+          default: false
+        surgeryDetails:
+          type: string
+          default: ""
+        surgeryTimeSpan:
+          type: string
+          default: ""
+          example: "6 months ago"
+        diabetesStatus:
+          type: string
+          enum: [diabetic, non-diabetic]
+        allergies:
+          type: string
+          default: ""
+        others:
+          type: string
+          default: ""
+        transactionId:
+          type: string
+          minLength: 3
+
+    Consultation:
+      type: object
+      properties:
+        _id:
+          type: string
+        doctor:
+          oneOf:
+            - type: string
+            - $ref: "#/components/schemas/Doctor"
+        patient:
+          oneOf:
+            - type: string
+            - $ref: "#/components/schemas/Patient"
+        currentIllnessHistory:
+          type: string
+        recentSurgery:
+          type: object
+          properties:
+            hadSurgery:
+              type: boolean
+            details:
+              type: string
+            timeSpan:
+              type: string
+        familyMedicalHistory:
+          type: object
+          properties:
+            diabetesStatus:
+              type: string
+              enum: [diabetic, non-diabetic]
+            allergies:
+              type: string
+            others:
+              type: string
+        payment:
+          type: object
+          properties:
+            transactionId:
+              type: string
+            qrCodeImage:
+              type: string
+            amount:
+              type: number
+              example: 500
+        status:
+          type: string
+          enum: [pending, prescribed]
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+
+    Medicine:
+      type: object
+      properties:
+        name:
+          type: string
+        dosage:
+          type: string
+          default: ""
+        frequency:
+          type: string
+          default: ""
+        duration:
+          type: string
+          default: ""
+
+    CreatePrescriptionRequest:
+      type: object
+      required: [consultationId, careToBeTaken]
+      properties:
+        consultationId:
+          type: string
+        careToBeTaken:
+          type: string
+          minLength: 3
+        medicines:
+          type: array
+          default: []
+          items:
+            $ref: "#/components/schemas/Medicine"
+
+    UpdatePrescriptionRequest:
+      type: object
+      required: [careToBeTaken]
+      properties:
+        careToBeTaken:
+          type: string
+          minLength: 3
+        medicines:
+          type: array
+          default: []
+          items:
+            $ref: "#/components/schemas/Medicine"
+
+    Prescription:
+      type: object
+      properties:
+        _id:
+          type: string
+        consultation:
+          oneOf:
+            - type: string
+            - $ref: "#/components/schemas/Consultation"
+        doctor:
+          oneOf:
+            - type: string
+            - $ref: "#/components/schemas/Doctor"
+        patient:
+          oneOf:
+            - type: string
+            - $ref: "#/components/schemas/Patient"
+        careToBeTaken:
+          type: string
+        medicines:
+          type: array
+          items:
+            $ref: "#/components/schemas/Medicine"
+        pdfPath:
+          type: string
+          description: Cloudinary URL of the generated prescription PDF
+        pdfPublicId:
+          type: string
+        sentToPatient:
+          type: boolean
+        sentAt:
+          type: string
+          format: date-time
+          nullable: true
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+
+security:
+  - cookieAuth: []

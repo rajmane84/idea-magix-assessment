@@ -5,7 +5,9 @@
   "private": true,
   "scripts": {
     "dev": "bun run --watch src/server.ts",
-    "start": "bun run src/server.ts"
+    "start": "bun run src/server.ts",
+    "docs:build": "bunx @redocly/cli build-docs swagger.yaml -o swagger.html",
+    "docs:serve": "bun run docs:build && bunx serve -l 8090 ."
   },
   "devDependencies": {
     "@types/bcryptjs": "^3.0.0",
