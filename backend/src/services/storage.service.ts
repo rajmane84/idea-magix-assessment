@@ -38,8 +38,17 @@ function assertKeyInFolder(key: string, folder: string, label: string) {
   }
 }
 
-async function localSave(buffer: Buffer, folder: string, ext: string): Promise<StoredAsset> {
-  const key = `${folder}/${nanoid()}${ext}`;
+function buildKey(folder: string, ext: string, filenameHint?: string): string {
+  const slug = filenameHint
+    ?.toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "")
+    .slice(0, 60);
+  return slug ? `${folder}/${slug}-${nanoid(8)}${ext}` : `${folder}/${nanoid()}${ext}`;
+}
+
+async function localSave(buffer: Buffer, folder: string, ext: string, filenameHint?: string): Promise<StoredAsset> {
+  const key = buildKey(folder, ext, filenameHint);
   const filePath = path.join(env.storage.localDir, key);
   await mkdir(path.dirname(filePath), { recursive: true });
   await Bun.write(filePath, buffer);
@@ -53,8 +62,14 @@ async function localDelete(key: string): Promise<void> {
   });
 }
 
-async function s3Save(buffer: Buffer, folder: string, ext: string, contentType: string): Promise<StoredAsset> {
-  const key = `${folder}/${nanoid()}${ext}`;
+async function s3Save(
+  buffer: Buffer,
+  folder: string,
+  ext: string,
+  contentType: string,
+  filenameHint?: string
+): Promise<StoredAsset> {
+  const key = buildKey(folder, ext, filenameHint);
   await s3Client!.send(
     new PutObjectCommand({
       Bucket: env.storage.s3.bucket,
@@ -70,8 +85,16 @@ async function s3Delete(key: string): Promise<void> {
   await s3Client!.send(new DeleteObjectCommand({ Bucket: env.storage.s3.bucket, Key: key }));
 }
 
-async function save(buffer: Buffer, folder: string, ext: string, contentType: string): Promise<StoredAsset> {
-  return env.storage.driver === "s3" ? s3Save(buffer, folder, ext, contentType) : localSave(buffer, folder, ext);
+async function save(
+  buffer: Buffer,
+  folder: string,
+  ext: string,
+  contentType: string,
+  filenameHint?: string
+): Promise<StoredAsset> {
+  return env.storage.driver === "s3"
+    ? s3Save(buffer, folder, ext, contentType, filenameHint)
+    : localSave(buffer, folder, ext, filenameHint);
 }
 
 async function remove(key: string): Promise<void> {
@@ -94,9 +117,9 @@ export const storageService = {
     await remove(publicId);
   },
 
-  async addPrescriptionPdf(buffer: Buffer): Promise<StoredAsset> {
+  async addPrescriptionPdf(buffer: Buffer, filenameHint?: string): Promise<StoredAsset> {
     try {
-      return await save(buffer, PRESCRIPTIONS_FOLDER, ".pdf", "application/pdf");
+      return await save(buffer, PRESCRIPTIONS_FOLDER, ".pdf", "application/pdf", filenameHint);
     } catch (err) {
       console.error("Failed to upload prescription PDF", err);
       throw new Error("Failed to upload prescription PDF. Please try again.");

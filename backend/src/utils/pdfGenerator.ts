@@ -18,7 +18,11 @@ interface PrescriptionPdfInput {
 }
 
 export async function generatePrescriptionPdf(data: PrescriptionPdfInput): Promise<Buffer> {
-  const doc = new PDFDocument({ margin: 50, size: "A4" });
+  const doc = new PDFDocument({
+    margin: 50,
+    size: "A4",
+    info: { Title: `Prescription - Dr. ${data.doctor.name} - ${data.patient.name}` },
+  });
   const chunks: Buffer[] = [];
   doc.on("data", (chunk: Buffer) => chunks.push(chunk));
 

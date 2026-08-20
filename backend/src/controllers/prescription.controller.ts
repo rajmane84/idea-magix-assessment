@@ -32,7 +32,9 @@ async function buildAndSavePdf(prescriptionId: string) {
     createdAt: prescription.createdAt ?? new Date(),
   });
 
-  const { url, publicId } = await storageService.addPrescriptionPdf(pdfBuffer);
+  const dateStr = (prescription.createdAt ?? new Date()).toISOString().slice(0, 10);
+  const filenameHint = `prescription-dr-${doctor.name}-${patient.name}-${dateStr}`;
+  const { url, publicId } = await storageService.addPrescriptionPdf(pdfBuffer, filenameHint);
 
   prescription.pdfPath = url;
   prescription.pdfPublicId = publicId;

@@ -90,6 +90,31 @@ docker compose up --build
 
 This starts the backend on `http://localhost:5000` with `STORAGE_DRIVER=s3` pointed at the local MinIO instance (bucket `prescripto`, console at `http://localhost:9001`, login `minioadmin` / `minioadmin`). `MONGODB_URI` and the `S3_*` vars are overridden by `docker-compose.yml` to target the containerized services; everything else (`JWT_SECRET`, `RESEND_API_KEY`, etc.) comes from `backend/.env`.
 
+> Whenever you start the project via Docker (either method below), the backend container reads its config from `backend/.env` — not `.env.local` or anything else. **Copy `backend/.env.example` to `backend/.env` and fill it in before running `docker compose up` or `docker build`/`docker run`.**
+
+### Running just the backend container (plain Docker, no Compose)
+
+If you already have MongoDB (and, if using S3 storage, a bucket) running elsewhere and just want the backend in a container:
+
+```bash
+cd backend
+cp .env.example .env   # fill in MONGODB_URI, JWT_SECRET, and storage vars for your setup
+docker build -t prescripto-backend .
+docker run --rm -p 5000:5000 --env-file .env prescripto-backend
+```
+
+Unlike `docker-compose.yml`, this doesn't override any env vars for you — `backend/.env` needs to point `MONGODB_URI` (and `S3_*`, if `STORAGE_DRIVER=s3`) at services reachable from inside the container (e.g. `host.docker.internal` instead of `localhost` if they're running on your host machine).
+
+### Restoring the database dump
+
+A dump of the `prescripto` database (produced with `mongodump`) is included with this submission. To load it into your own MongoDB instance, install [MongoDB Database Tools](https://www.mongodb.com/try/download/database-tools) (adds `mongorestore`) and run:
+
+```bash
+mongorestore --uri="<your-mongodb-uri>" dump/
+```
+
+This recreates the `doctors`, `patients`, `consultations`, and `prescriptions` collections with the same data used while testing this submission.
+
 ---
 
 ## Storage
