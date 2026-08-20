@@ -13,6 +13,7 @@ export const doctorSignUpSchema = z.object({
     .min(0, "Experience cannot be negative")
     .max(150, "Please enter a valid value"),
   password: z.string().min(6, "Password must be at least 6 characters"),
+  profileImage: z.string().trim().optional().default(""),
 });
 
 export const doctorSignInSchema = z.object({
@@ -42,6 +43,7 @@ export const patientSignUpSchema = z.object({
         .filter(Boolean)
     ),
   password: z.string().min(6, "Password must be at least 6 characters"),
+  profileImage: z.string().trim().optional().default(""),
 });
 
 export const patientSignInSchema = z.object({

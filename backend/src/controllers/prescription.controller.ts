@@ -9,10 +9,10 @@ import { paginationQuerySchema } from "../schemas/shared.schema";
 import { Prescription } from "../models/Prescription";
 import { Consultation } from "../models/Consultation";
 import { generatePrescriptionPdf } from "../utils/pdfGenerator";
-import { cloudinaryService } from "../services/cloudinary.service";
+import { storageService } from "../services/storage.service";
 import type { AuthenticatedRequest } from "../types";
 
-/** Renders the prescription PDF, uploads it to Cloudinary, and cleans up the previous PDF (if any) once the new one is safely saved. */
+/** Renders the prescription PDF, uploads it to storage, and cleans up the previous PDF (if any) once the new one is safely saved. */
 async function buildAndSavePdf(prescriptionId: string) {
   const prescription = await Prescription.findById(prescriptionId)
     .populate("doctor", "name specialty yearsOfExperience")
@@ -33,13 +33,13 @@ async function buildAndSavePdf(prescriptionId: string) {
     createdAt: prescription.createdAt ?? new Date(),
   });
 
-  const { url, publicId } = await cloudinaryService.addPrescriptionPdf(pdfBuffer);
+  const { url, publicId } = await storageService.addPrescriptionPdf(pdfBuffer);
 
   prescription.pdfPath = url;
   prescription.pdfPublicId = publicId;
   await prescription.save();
 
-  if (previousPdfPublicId) await cloudinaryService.deletePrescriptionPdf(previousPdfPublicId);
+  if (previousPdfPublicId) await storageService.deletePrescriptionPdf(previousPdfPublicId);
 
   return prescription;
 }

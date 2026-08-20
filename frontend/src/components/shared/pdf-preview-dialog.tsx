@@ -1,7 +1,6 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
-import { buildDownloadUrl } from "@/lib/api-client";
 import { Eye, Download } from "lucide-react";
 
 interface PdfPreviewDialogProps {
@@ -13,7 +12,8 @@ interface PdfPreviewDialogProps {
 
 /**
  * Preview opens the PDF in a new tab via the browser's built-in viewer.
- * Download forces a save under a meaningful filename instead of Cloudinary's random public ID.
+ * Download uses the `download` attribute to suggest a meaningful filename
+ * instead of the storage backend's random key.
  */
 export function PdfPreviewDialog({
   url,
@@ -38,7 +38,7 @@ export function PdfPreviewDialog({
         variant="outline"
         size={triggerSize}
         nativeButton={false}
-        render={<a href={buildDownloadUrl(url, downloadFilename)} target="_blank" rel="noopener noreferrer" />}
+        render={<a href={url} download={downloadFilename} target="_blank" rel="noopener noreferrer" />}
       >
         <Download className="h-4 w-4" />
         Download

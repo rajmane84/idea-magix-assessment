@@ -30,11 +30,14 @@ report.[0-9]_.[0-9]_.[0-9]_.[0-9]_.json
 # IntelliJ based IDEs
 .idea
 
-# uploaded files (profile images now live in Cloudinary, not on disk)
+# uploaded files (written here when STORAGE_DRIVER=local; ignored either way,
+# since with STORAGE_DRIVER=s3 nothing is written to disk)
 uploads/qr/*
 uploads/prescriptions/*
+uploads/profiles/*
 !uploads/qr/.gitkeep
 !uploads/prescriptions/.gitkeep
+!uploads/profiles/.gitkeep
 
 # Finder (MacOS) folder config
 .DS_Store

@@ -27,7 +27,7 @@ export function ProfileImageUpload({ value, onChange, fallback = "?" }: ProfileI
     const uploaded = await uploadImage(file).catch(() => null);
     if (!uploaded) return;
 
-    // Replaced photos are cleaned up in the background so unused uploads don't pile up in Cloudinary.
+    // Replaced photos are cleaned up in the background so unused uploads don't pile up in storage.
     if (publicId) deleteImage(publicId);
 
     setPublicId(uploaded.publicId);

@@ -17,7 +17,7 @@ interface PrescriptionPdfInput {
   createdAt: Date;
 }
 
-/** Renders a prescription PDF and returns it as an in-memory buffer, ready to upload to Cloudinary. */
+/** Renders a prescription PDF and returns it as an in-memory buffer, ready to upload to storage. */
 export async function generatePrescriptionPdf(data: PrescriptionPdfInput): Promise<Buffer> {
   const doc = new PDFDocument({ margin: 50, size: "A4" });
   const chunks: Buffer[] = [];

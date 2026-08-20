@@ -1,6 +1,6 @@
 import type { Request, Response } from "express";
 import { asyncHandler } from "../utils/asyncHandler";
-import { cloudinaryService } from "../services/cloudinary.service";
+import { storageService } from "../services/storage.service";
 import { deleteProfileImageSchema } from "../schemas/upload.schema";
 
 const ALLOWED_MIME_TYPES = ["image/jpeg", "image/png", "image/webp", "image/jpg"];
@@ -25,7 +25,7 @@ export const uploadProfileImage = asyncHandler(async (req: Request, res: Respons
     throw new Error("File size exceeds the 5MB limit");
   }
 
-  const { url, publicId } = await cloudinaryService.addProfileImage(file.buffer);
+  const { url, publicId } = await storageService.addProfileImage(file.buffer, file.mimetype);
 
   res.status(201).json({
     success: true,
@@ -43,7 +43,7 @@ export const deleteProfileImage = asyncHandler(async (req: Request, res: Respons
 
   const { publicId } = parsed.data;
 
-  await cloudinaryService.deleteProfileImage(publicId);
+  await storageService.deleteProfileImage(publicId);
 
   res.status(200).json({
     success: true,

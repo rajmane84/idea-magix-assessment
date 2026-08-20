@@ -40,7 +40,7 @@ export const registerDoctor = asyncHandler(async (req: Request, res: Response) =
     throw parsed.error;
   }
 
-  const { email, name, password, phone, specialty, yearsOfExperience } = parsed.data;
+  const { email, name, password, phone, specialty, yearsOfExperience, profileImage } = parsed.data;
 
   const existing = await Doctor.findOne({ $or: [{ email }, { phone }] });
   if (existing) {
@@ -56,6 +56,7 @@ export const registerDoctor = asyncHandler(async (req: Request, res: Response) =
       phone,
       specialty,
       yearsOfExperience,
+      profileImage,
     });
 
   await issueOtp(doctor);
@@ -97,7 +98,7 @@ export const registerPatient = asyncHandler(async (req: Request, res: Response) 
     throw parsed.error;
   }
 
-  const { age, email, illnessHistory, name, password, phone, surgeryHistory } = parsed.data;
+  const { age, email, illnessHistory, name, password, phone, surgeryHistory, profileImage } = parsed.data;
 
   const existing = await Patient.findOne({ $or: [{ email }, { phone }] });
   if (existing) {
@@ -113,7 +114,8 @@ export const registerPatient = asyncHandler(async (req: Request, res: Response) 
       surgeryHistory,
       name,
       password,
-      phone
+      phone,
+      profileImage,
     });
 
   await issueOtp(patient);

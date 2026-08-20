@@ -20,7 +20,7 @@ tags:
   - name: Prescriptions
     description: Prescription creation, editing, sending, and retrieval
   - name: Uploads
-    description: Profile image upload/delete via Cloudinary
+    description: Profile image upload/delete via the storage service (local disk or S3-compatible bucket)
 
 paths:
   /auth/doctor/signup:
@@ -508,7 +508,7 @@ paths:
       description: >
         Fails if a prescription already exists for the consultation, or if the
         consultation does not belong to the authenticated doctor. Generates and
-        uploads a PDF to Cloudinary, and marks the consultation as "prescribed".
+        uploads a PDF to storage, and marks the consultation as "prescribed".
       requestBody:
         required: true
         content:
@@ -714,7 +714,7 @@ paths:
       summary: Upload a profile image
       description: >
         Accepts a single image file (JPEG, PNG, or WebP, max 5MB) and uploads it
-        to Cloudinary.
+        to storage (local disk or an S3-compatible bucket, depending on STORAGE_DRIVER).
       security: []
       requestBody:
         required: true
@@ -992,6 +992,10 @@ components:
           type: string
           minLength: 6
           format: password
+        profileImage:
+          type: string
+          default: ""
+          description: URL returned by a prior POST /uploads/profile-image call
 
     PatientSignUpRequest:
       type: object
@@ -1021,6 +1025,10 @@ components:
           type: string
           minLength: 6
           format: password
+        profileImage:
+          type: string
+          default: ""
+          description: URL returned by a prior POST /uploads/profile-image call
 
     SignInRequest:
       type: object
@@ -1187,7 +1195,7 @@ components:
             $ref: "#/components/schemas/Medicine"
         pdfPath:
           type: string
-          description: Cloudinary URL of the generated prescription PDF
+          description: URL of the generated prescription PDF
         pdfPublicId:
           type: string
         sentToPatient:

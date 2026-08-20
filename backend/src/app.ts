@@ -1,3 +1,4 @@
+import path from "node:path";
 import express from "express";
 import cors from "cors";
 import cookieParser from "cookie-parser";
@@ -21,6 +22,12 @@ app.use(express.urlencoded({ extended: true, limit: "1mb" }));
 app.use(cookieParser());
 
 app.get("/health", (_req, res) => res.json({ success: true, message: "OK" }));
+
+// Serves profile images/prescription PDFs when STORAGE_DRIVER=local (e.g. in production on
+// Render). Unused when STORAGE_DRIVER=s3, since assets are served from the S3-compatible bucket.
+if (env.storage.driver === "local") {
+  app.use("/uploads", express.static(path.resolve(env.storage.localDir)));
+}
 
 app.use("/api", generalLimiter, routes);
 

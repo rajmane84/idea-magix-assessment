@@ -10,10 +10,19 @@ const envSchema = z
     NODE_ENV: z.enum(["development", "production", "test"]).default("development"),
     EMAIL_FROM: z.string().default("Prescripto <onboarding@resend.dev>"),
     RESEND_API_KEY: z.string().optional(),
-    CLOUDINARY_CLOUD_NAME: z.string().min(1, "CLOUDINARY_CLOUD_NAME is required"),
-    CLOUDINARY_API_KEY: z.string().min(1, "CLOUDINARY_API_KEY is required"),
-    CLOUDINARY_API_SECRET: z.string().min(1, "CLOUDINARY_API_SECRET is required"),
-    CLOUDINARY_FOLDER: z.string().default("prescripto"),
+    SERVER_URL: z.string().optional(),
+    // "local" writes profile images/PDFs to disk (used in production on Render,
+    // which can't run docker-compose). "s3" uses an S3-compatible bucket, e.g.
+    // MinIO via docker-compose for local/self-hosted setups. See README.
+    STORAGE_DRIVER: z.enum(["local", "s3"]).default("local"),
+    STORAGE_LOCAL_DIR: z.string().default("uploads"),
+    S3_ENDPOINT: z.string().optional(),
+    S3_REGION: z.string().default("us-east-1"),
+    S3_ACCESS_KEY_ID: z.string().optional(),
+    S3_SECRET_ACCESS_KEY: z.string().optional(),
+    S3_BUCKET: z.string().optional(),
+    S3_PUBLIC_URL: z.string().optional(),
+    S3_FORCE_PATH_STYLE: z.coerce.boolean().default(true),
   })
   .check((ctx) => {
     if (ctx.value.NODE_ENV === "production" && !ctx.value.RESEND_API_KEY) {
@@ -23,6 +32,20 @@ const envSchema = z
         path: ["RESEND_API_KEY"],
         input: ctx.value.RESEND_API_KEY,
       });
+    }
+
+    if (ctx.value.STORAGE_DRIVER === "s3") {
+      const required = ["S3_ENDPOINT", "S3_ACCESS_KEY_ID", "S3_SECRET_ACCESS_KEY", "S3_BUCKET", "S3_PUBLIC_URL"] as const;
+      for (const key of required) {
+        if (!ctx.value[key]) {
+          ctx.issues.push({
+            code: "custom",
+            message: `${key} is required when STORAGE_DRIVER=s3`,
+            path: [key],
+            input: ctx.value[key],
+          });
+        }
+      }
     }
   });
 
@@ -44,10 +67,18 @@ export const env = {
   isProd: parsed.data.NODE_ENV === "production",
   emailFrom: parsed.data.EMAIL_FROM,
   resendApiKey: parsed.data.RESEND_API_KEY,
-  cloudinary: {
-    cloudName: parsed.data.CLOUDINARY_CLOUD_NAME,
-    apiKey: parsed.data.CLOUDINARY_API_KEY,
-    apiSecret: parsed.data.CLOUDINARY_API_SECRET,
-    folder: parsed.data.CLOUDINARY_FOLDER,
+  serverUrl: parsed.data.SERVER_URL || `http://localhost:${parsed.data.PORT}`,
+  storage: {
+    driver: parsed.data.STORAGE_DRIVER,
+    localDir: parsed.data.STORAGE_LOCAL_DIR,
+    s3: {
+      endpoint: parsed.data.S3_ENDPOINT,
+      region: parsed.data.S3_REGION,
+      accessKeyId: parsed.data.S3_ACCESS_KEY_ID,
+      secretAccessKey: parsed.data.S3_SECRET_ACCESS_KEY,
+      bucket: parsed.data.S3_BUCKET,
+      publicUrl: parsed.data.S3_PUBLIC_URL,
+      forcePathStyle: parsed.data.S3_FORCE_PATH_STYLE,
+    },
   },
 };
