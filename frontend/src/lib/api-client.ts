@@ -11,7 +11,7 @@ export const apiClient = axios.create({
 /** Resolves a relative `/uploads/...` path returned by the API into an absolute URL. */
 export function resolveAssetUrl(path?: string | null): string | undefined {
   if (!path) return undefined;
-  if (path.startsWith("http")) return path;
+  if (path.startsWith("http") || path.startsWith("data:")) return path;
   return `${ASSET_URL}${path}`;
 }
 

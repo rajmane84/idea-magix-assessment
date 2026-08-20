@@ -55,10 +55,11 @@ export function usePrescriptionByConsultation(consultationId: string | undefined
   });
 }
 
-export function useMyPrescriptionsAsPatient() {
+export function useMyPrescriptionsAsPatient(page = 1, limit = 10) {
   return useQuery({
-    queryKey: ["prescriptions", "patient", "mine"],
-    queryFn: () => prescriptionService.listMineAsPatient(),
+    queryKey: ["prescriptions", "patient", "mine", page, limit],
+    queryFn: () => prescriptionService.listMineAsPatient(page, limit),
+    placeholderData: (previousData) => previousData,
   });
 }
 

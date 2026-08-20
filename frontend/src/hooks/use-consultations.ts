@@ -24,17 +24,19 @@ export function useCreateConsultation() {
   });
 }
 
-export function useMyConsultationsAsPatient() {
+export function useMyConsultationsAsPatient(page = 1, limit = 10) {
   return useQuery({
-    queryKey: ["consultations", "patient", "mine"],
-    queryFn: () => consultationService.listMineAsPatient(),
+    queryKey: ["consultations", "patient", "mine", page, limit],
+    queryFn: () => consultationService.listMineAsPatient(page, limit),
+    placeholderData: (previousData) => previousData,
   });
 }
 
-export function useMyConsultationsAsDoctor() {
+export function useMyConsultationsAsDoctor(page = 1, limit = 10) {
   return useQuery({
-    queryKey: ["consultations", "doctor", "mine"],
-    queryFn: () => consultationService.listMineAsDoctor(),
+    queryKey: ["consultations", "doctor", "mine", page, limit],
+    queryFn: () => consultationService.listMineAsDoctor(page, limit),
+    placeholderData: (previousData) => previousData,
   });
 }
 

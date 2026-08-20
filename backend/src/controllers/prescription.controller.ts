@@ -1,6 +1,11 @@
+import mongoose from "mongoose";
 import type { Response } from "express";
 import { asyncHandler } from "../utils/asyncHandler";
-import { createPrescriptionSchema, updatePrescriptionSchema } from "../schemas/prescription.schema";
+import {
+  createPrescriptionSchema,
+  updatePrescriptionSchema,
+} from "../schemas/prescription.schema";
+import { paginationQuerySchema } from "../schemas/shared.schema";
 import { Prescription } from "../models/Prescription";
 import { Consultation } from "../models/Consultation";
 import { generatePrescriptionPdf } from "../utils/pdfGenerator";
@@ -49,6 +54,10 @@ export const createPrescription = asyncHandler(async (req: AuthenticatedRequest,
 
   const input = parsed.data;
 
+  if (!mongoose.isValidObjectId(input.consultationId)) {
+    throw new Error("Invalid consultation ID");
+  }
+
   const consultation = await Consultation.findById(input.consultationId);
   if (!consultation) {
     throw new Error("Consultation not found");
@@ -68,6 +77,8 @@ export const createPrescription = asyncHandler(async (req: AuthenticatedRequest,
     patient: consultation.patient,
     careToBeTaken: input.careToBeTaken,
     medicines: input.medicines,
+    sentToPatient: false,
+    sentAt: null,
   });
 
   consultation.status = "prescribed";
@@ -88,7 +99,12 @@ export const updatePrescription = asyncHandler(async (req: AuthenticatedRequest,
 
   const input = parsed.data;
 
-  const existing = await Prescription.findById(req.params.id);
+  const { id } = req.params;
+  if (!mongoose.isValidObjectId(id)) {
+    throw new Error("Invalid prescription ID");
+  }
+
+  const existing = await Prescription.findById(id as string);
   if (!existing) {
     throw new Error("Prescription not found");
   }
@@ -108,43 +124,112 @@ export const updatePrescription = asyncHandler(async (req: AuthenticatedRequest,
 });
 
 export const sendPrescription = asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
+  const { id } = req.params;
   const user = req.user!;
 
-  const prescription = await Prescription.findById(req.params.id);
+  if (!mongoose.isValidObjectId(id)) {
+    throw new Error("Invalid prescription ID");
+  }
+
+  const prescription = await Prescription.findById(id);
   if (!prescription) {
     throw new Error("Prescription not found");
   }
+
   if (prescription.doctor.toString() !== user.id) {
     throw new Error("You cannot send this prescription");
+  }
+
+  if (!prescription.careToBeTaken?.trim()) {
+    throw new Error("Cannot send an incomplete prescription");
+  }
+
+  // Ensure PDF is generated and uploaded before sending
+  if (!prescription.pdfPath) {
+    await buildAndSavePdf(prescription.id);
   }
 
   prescription.sentToPatient = true;
   prescription.sentAt = new Date();
   await prescription.save();
 
+  // Sync consultation status
+  await Consultation.findByIdAndUpdate(prescription.consultation, { status: "prescribed" });
+
   res.status(200).json({ success: true, message: "Prescription sent to patient", data: prescription });
 });
 
 export const getPrescriptionByConsultation = asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
-  const prescription = await Prescription.findOne({ consultation: req.params.consultationId });
+  const { consultationId } = req.params;
+  const user = req.user!;
+
+  if (!mongoose.isValidObjectId(consultationId)) {
+    throw new Error("Invalid consultation ID");
+  }
+
+  const consultation = await Consultation.findById(consultationId);
+  if (!consultation) {
+    throw new Error("Consultation not found");
+  }
+
+  const prescription = await Prescription.findOne({ consultation: consultationId })
+    .populate("doctor")
+    .populate("patient")
+    .populate("consultation");
+
+  if (!prescription) {
+    return res.status(200).json({ success: true, data: null });
+  }
+
+  // Patients can only view prescriptions that have been finalized and sent
+  const isPatient = consultation.patient.toString() === user.id;
+  
+  if (isPatient && !prescription.sentToPatient) {
+    return res.status(200).json({ success: true, data: null });
+  }
+
   res.status(200).json({ success: true, data: prescription });
 });
 
 export const listPrescriptionsForPatient = asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
   const user = req.user!;
 
-  const prescriptions = await Prescription.find({ patient: user.id, sentToPatient: true })
-    .populate("doctor", "-password")
-    .populate("consultation")
-    .sort({ createdAt: -1 });
+  const parsed = paginationQuerySchema.safeParse(req.query);
+  if (!parsed.success) {
+    throw parsed.error;
+  }
 
-  res.status(200).json({ success: true, data: prescriptions });
+  const { page, limit, skip } = parsed.data;
+
+  const filter = { patient: user.id, sentToPatient: true };
+
+  const [prescriptions, total] = await Promise.all([
+    Prescription.find(filter)
+      .populate("doctor")
+      .populate("consultation")
+      .sort({ createdAt: -1 })
+      .skip(skip)
+      .limit(limit),
+    Prescription.countDocuments(filter),
+  ]);
+
+  res.status(200).json({
+    success: true,
+    data: prescriptions,
+    pagination: { page, limit, total, totalPages: Math.ceil(total / limit) },
+  });
 });
 
 export const getPrescriptionById = asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
-  const prescription = await Prescription.findById(req.params.id)
-    .populate("doctor", "-password")
-    .populate("patient", "-password")
+  const { id } = req.params;
+
+  if (!mongoose.isValidObjectId(id as string)) {
+    throw new Error("Invalid prescription ID");
+  }
+
+  const prescription = await Prescription.findById(id as string)
+    .populate("doctor")
+    .populate("patient")
     .populate("consultation");
 
   if (!prescription) {

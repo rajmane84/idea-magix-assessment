@@ -1,5 +1,5 @@
 import { apiClient } from "@/lib/api-client";
-import type { ApiSuccess, Consultation } from "@/types";
+import type { ApiPaginated, ApiSuccess, Consultation } from "@/types";
 
 export interface CreateConsultationPayload {
   doctorId: string;
@@ -26,14 +26,18 @@ export const consultationService = {
     return res.data.data;
   },
 
-  async listMineAsPatient() {
-    const res = await apiClient.get<ApiSuccess<Consultation[]>>("/consultations/mine");
-    return res.data.data;
+  async listMineAsPatient(page = 1, limit = 10) {
+    const res = await apiClient.get<ApiPaginated<Consultation[]>>("/consultations/mine", {
+      params: { page, limit },
+    });
+    return { consultations: res.data.data, pagination: res.data.pagination };
   },
 
-  async listMineAsDoctor() {
-    const res = await apiClient.get<ApiSuccess<Consultation[]>>("/consultations/doctor/mine");
-    return res.data.data;
+  async listMineAsDoctor(page = 1, limit = 10) {
+    const res = await apiClient.get<ApiPaginated<Consultation[]>>("/consultations/doctor/mine", {
+      params: { page, limit },
+    });
+    return { consultations: res.data.data, pagination: res.data.pagination };
   },
 
   async getById(id: string) {

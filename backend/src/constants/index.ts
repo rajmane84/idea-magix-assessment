@@ -14,3 +14,4 @@ export const MAX_OTP_ATTEMPTS = 5;
 export const OTP_RESEND_COOLDOWN_MS = 60 * 1000;
 
 export const CONSULTATION_FEE = 500;
+export const MAX_CONSULTATIONS_PER_PATIENT_PER_DAY = 4;

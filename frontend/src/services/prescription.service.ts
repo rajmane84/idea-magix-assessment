@@ -1,5 +1,5 @@
 import { apiClient } from "@/lib/api-client";
-import type { ApiSuccess, Medicine, Prescription } from "@/types";
+import type { ApiPaginated, ApiSuccess, Medicine, Prescription } from "@/types";
 
 export interface CreatePrescriptionPayload {
   consultationId: string;
@@ -33,9 +33,11 @@ export const prescriptionService = {
     return res.data.data;
   },
 
-  async listMineAsPatient() {
-    const res = await apiClient.get<ApiSuccess<Prescription[]>>("/prescriptions/mine");
-    return res.data.data;
+  async listMineAsPatient(page = 1, limit = 10) {
+    const res = await apiClient.get<ApiPaginated<Prescription[]>>("/prescriptions/mine", {
+      params: { page, limit },
+    });
+    return { prescriptions: res.data.data, pagination: res.data.pagination };
   },
 
   async getById(id: string) {
