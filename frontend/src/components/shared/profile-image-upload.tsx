@@ -1,45 +1,35 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useEffect, useMemo, useRef } from "react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
-import { useUploadProfileImage, useDeleteProfileImage } from "@/hooks/use-upload";
-import { Loader2, Upload } from "lucide-react";
+import { Upload } from "lucide-react";
 
 interface ProfileImageUploadProps {
-  value: string;
-  onChange: (url: string) => void;
+  value: File | null;
+  onChange: (file: File | null) => void;
   fallback?: string;
 }
 
+/** Only holds the selected file + a local preview; the actual upload happens on form submit. */
 export function ProfileImageUpload({ value, onChange, fallback = "?" }: ProfileImageUploadProps) {
   const inputRef = useRef<HTMLInputElement>(null);
-  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
-  const [publicId, setPublicId] = useState<string | null>(null);
-  const { mutateAsync: uploadImage, isPending } = useUploadProfileImage();
-  const { mutate: deleteImage } = useDeleteProfileImage();
+  const previewUrl = useMemo(() => (value ? URL.createObjectURL(value) : null), [value]);
 
-  async function handleFileChange(e: React.ChangeEvent<HTMLInputElement>) {
-    const file = e.target.files?.[0];
-    if (!file) return;
+  useEffect(() => {
+    return () => {
+      if (previewUrl) URL.revokeObjectURL(previewUrl);
+    };
+  }, [previewUrl]);
 
-    setPreviewUrl(URL.createObjectURL(file));
-    const uploaded = await uploadImage(file).catch(() => null);
-    if (!uploaded) return;
-
-    // Replaced photos are cleaned up in the background so unused uploads don't pile up in storage.
-    if (publicId) deleteImage(publicId);
-
-    setPublicId(uploaded.publicId);
-    onChange(uploaded.url);
+  function handleFileChange(e: React.ChangeEvent<HTMLInputElement>) {
+    onChange(e.target.files?.[0] ?? null);
   }
-
-  const displayUrl = previewUrl ?? (value || undefined);
 
   return (
     <div className="flex flex-col items-center gap-3">
       <Avatar className="h-24 w-24">
-        <AvatarImage src={displayUrl} alt="Profile" />
+        <AvatarImage src={previewUrl ?? undefined} alt="Profile" />
         <AvatarFallback className="text-lg">{fallback}</AvatarFallback>
       </Avatar>
       <input
@@ -49,18 +39,12 @@ export function ProfileImageUpload({ value, onChange, fallback = "?" }: ProfileI
         className="hidden"
         onChange={handleFileChange}
       />
-      <Button
-        type="button"
-        variant="outline"
-        size="sm"
-        onClick={() => inputRef.current?.click()}
-        disabled={isPending}
-      >
-        {isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Upload className="h-4 w-4" />}
-        {isPending ? "Uploading..." : "Upload photo"}
+      <Button type="button" variant="outline" size="sm" onClick={() => inputRef.current?.click()}>
+        <Upload className="h-4 w-4" />
+        {value ? "Change photo" : "Upload photo"}
       </Button>
       <p className="max-w-xs text-center text-xs text-muted-foreground">
-        Your photo is uploaded as soon as you select it, before you submit the form.
+        Your photo is uploaded when you submit the form.
       </p>
     </div>
   );

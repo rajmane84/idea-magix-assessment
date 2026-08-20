@@ -12,6 +12,7 @@ import { Button } from "@/components/ui/button";
 import { ProfileImageUpload } from "@/components/shared/profile-image-upload";
 import { IllnessTagInput } from "@/components/shared/illness-tag-input";
 import { usePatientSignUp } from "@/hooks/use-auth";
+import { useUploadProfileImage } from "@/hooks/use-upload";
 import { patientSignUpSchema, type PatientSignUpValues } from "@/lib/validation/auth";
 import { emptyStringToUndefined } from "@/lib/validation/common";
 import { RequiredMark } from "@/components/shared/required-mark";
@@ -19,8 +20,9 @@ import { PasswordInput } from "@/components/shared/password-input";
 import { Loader2 } from "lucide-react";
 
 export default function PatientSignUpPage() {
-  const [profileImage, setProfileImage] = useState("");
-  const { mutate, isPending } = usePatientSignUp();
+  const [profileImageFile, setProfileImageFile] = useState<File | null>(null);
+  const { mutate, isPending: isSigningUp } = usePatientSignUp();
+  const { mutateAsync: uploadImage, isPending: isUploading } = useUploadProfileImage();
 
   const {
     register,
@@ -32,9 +34,26 @@ export default function PatientSignUpPage() {
     defaultValues: { surgeryHistory: "", illnessHistory: "" },
   });
 
-  function onSubmit(values: PatientSignUpValues) {
-    mutate({ ...values, profileImage });
+  async function onSubmit(values: PatientSignUpValues) {
+    let profileImage = "";
+    if (profileImageFile) {
+      const uploaded = await uploadImage(profileImageFile).catch(() => null);
+      if (!uploaded) return;
+      profileImage = uploaded.url;
+    }
+    mutate({
+      name: values.name,
+      age: values.age,
+      email: values.email,
+      phone: values.phone,
+      surgeryHistory: values.surgeryHistory,
+      illnessHistory: values.illnessHistory,
+      password: values.password,
+      profileImage,
+    });
   }
+
+  const isPending = isUploading || isSigningUp;
 
   return (
     <div className="flex flex-1 items-center justify-center px-4 py-10">
@@ -46,7 +65,7 @@ export default function PatientSignUpPage() {
         <CardContent>
           <form onSubmit={handleSubmit(onSubmit)}>
             <FieldGroup>
-              <ProfileImageUpload value={profileImage} onChange={setProfileImage} fallback="P" />
+              <ProfileImageUpload value={profileImageFile} onChange={setProfileImageFile} fallback="P" />
 
               <Field orientation="responsive">
                 <Field className="flex-1">
@@ -108,13 +127,23 @@ export default function PatientSignUpPage() {
                 <FieldError errors={[errors.illnessHistory]} />
               </Field>
 
-              <Field>
-                <FieldLabel htmlFor="password">
-                  Password
-                  <RequiredMark />
-                </FieldLabel>
-                <PasswordInput id="password" placeholder="••••••••" {...register("password")} />
-                <FieldError errors={[errors.password]} />
+              <Field orientation="responsive">
+                <Field className="flex-1">
+                  <FieldLabel htmlFor="password">
+                    Password
+                    <RequiredMark />
+                  </FieldLabel>
+                  <PasswordInput id="password" placeholder="••••••••" {...register("password")} />
+                  <FieldError errors={[errors.password]} />
+                </Field>
+                <Field className="flex-1">
+                  <FieldLabel htmlFor="confirmPassword">
+                    Confirm Password
+                    <RequiredMark />
+                  </FieldLabel>
+                  <PasswordInput id="confirmPassword" placeholder="••••••••" {...register("confirmPassword")} />
+                  <FieldError errors={[errors.confirmPassword]} />
+                </Field>
               </Field>
 
               <Button type="submit" disabled={isPending}>

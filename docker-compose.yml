@@ -46,8 +46,6 @@ services:
     env_file:
       - ./backend/.env
     environment:
-      # Overrides the values from backend/.env so the backend talks to the
-      # dockerized Mongo/MinIO services instead of your local dev setup.
       MONGODB_URI: mongodb://mongodb:27017/prescripto
       STORAGE_DRIVER: s3
       S3_ENDPOINT: http://minio:9000
