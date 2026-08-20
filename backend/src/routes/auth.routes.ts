@@ -10,16 +10,17 @@ import {
   resendOtp,
 } from "../controllers/auth.controller";
 import { requireAuth } from "../middleware/auth";
+import { authLimiter, otpLimiter } from "../middleware/rateLimit";
 
 const router = Router();
 
-router.post("/doctor/signup", registerDoctor);
-router.post("/doctor/signin", loginDoctor);
-router.post("/patient/signup", registerPatient);
-router.post("/patient/signin", loginPatient);
+router.post("/doctor/signup", authLimiter, registerDoctor);
+router.post("/doctor/signin", authLimiter, loginDoctor);
+router.post("/patient/signup", authLimiter, registerPatient);
+router.post("/patient/signin", authLimiter, loginPatient);
 router.post("/logout", logout);
 router.get("/me", requireAuth(), me);
-router.post("/verify-otp", requireAuth(), verifyOtp);
-router.post("/resend-otp", requireAuth(), resendOtp);
+router.post("/verify-otp", requireAuth(), otpLimiter, verifyOtp);
+router.post("/resend-otp", requireAuth(), otpLimiter, resendOtp);
 
 export default router;
