@@ -6,14 +6,9 @@ import { useSession } from "@/providers/session-provider";
 import type { UserRole } from "@/types";
 
 interface UseRequireRoleOptions {
-  /** Set to false on the OTP verification page itself, to avoid a redirect loop. */
   requireVerified?: boolean;
 }
 
-/**
- * Redirects to `redirectTo` if the hydrated session doesn't match the required role, and
- * (unless opted out) redirects unverified users to their role's OTP verification page.
- */
 export function useRequireRole(role: UserRole, redirectTo: string, options: UseRequireRoleOptions = {}) {
   const { requireVerified = true } = options;
   const session = useSession();

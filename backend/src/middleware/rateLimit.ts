@@ -5,7 +5,6 @@ function tooManyRequestsHandler(_req: Request, res: Response) {
   res.status(429).json({ success: false, message: "Too many requests, please try again later" });
 }
 
-// Applied to every route
 export const generalLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
   limit: 300,

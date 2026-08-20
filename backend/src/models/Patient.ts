@@ -47,14 +47,12 @@ const patientSchema = new Schema<IPatient, PatientModel, IPatientMethods>(
       match: [PHONE_REGEX, "Invalid phone number format"],
     },
     surgeryHistory: { type: String, default: "" },
-    // Stored as an array; frontend renders as comma-separated panel/pills.
     illnessHistory: { type: [String], default: [] },
     password: { type: String, required: true, select: false, minlength: 6 },
     isVerified: { type: Boolean, default: false },
     otpCodeHash: { type: String, select: false, default: null },
     otpExpiresAt: { type: Date, select: false, default: null },
     otpAttempts: { type: Number, select: false, default: 0 },
-    // Prevents OTP-resend spam — check this before issuing a new code.
     otpLastSentAt: { type: Date, select: false, default: null },
   },
   { timestamps: true }

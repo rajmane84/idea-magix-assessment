@@ -22,7 +22,7 @@ export interface PatientSignUpPayload {
   email: string;
   phone: string;
   surgeryHistory?: string;
-  illnessHistory?: string; // comma separated, split server-side
+  illnessHistory?: string; 
   password: string;
   profileImage?: string;
 }

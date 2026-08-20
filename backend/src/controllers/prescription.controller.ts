@@ -12,7 +12,6 @@ import { generatePrescriptionPdf } from "../utils/pdfGenerator";
 import { storageService } from "../services/storage.service";
 import type { AuthenticatedRequest } from "../types";
 
-/** Renders the prescription PDF, uploads it to storage, and cleans up the previous PDF (if any) once the new one is safely saved. */
 async function buildAndSavePdf(prescriptionId: string) {
   const prescription = await Prescription.findById(prescriptionId)
     .populate("doctor", "name specialty yearsOfExperience")
@@ -144,7 +143,6 @@ export const sendPrescription = asyncHandler(async (req: AuthenticatedRequest, r
     throw new Error("Cannot send an incomplete prescription");
   }
 
-  // Ensure PDF is generated and uploaded before sending
   if (!prescription.pdfPath) {
     await buildAndSavePdf(prescription.id);
   }
@@ -153,7 +151,6 @@ export const sendPrescription = asyncHandler(async (req: AuthenticatedRequest, r
   prescription.sentAt = new Date();
   await prescription.save();
 
-  // Sync consultation status
   await Consultation.findByIdAndUpdate(prescription.consultation, { status: "prescribed" });
 
   res.status(200).json({ success: true, message: "Prescription sent to patient", data: prescription });
@@ -181,7 +178,6 @@ export const getPrescriptionByConsultation = asyncHandler(async (req: Authentica
     return res.status(200).json({ success: true, data: null });
   }
 
-  // Patients can only view prescriptions that have been finalized and sent
   const isPatient = consultation.patient.toString() === user.id;
   
   if (isPatient && !prescription.sentToPatient) {

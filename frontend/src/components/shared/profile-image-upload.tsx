@@ -11,7 +11,6 @@ interface ProfileImageUploadProps {
   fallback?: string;
 }
 
-/** Only holds the selected file + a local preview; the actual upload happens on form submit. */
 export function ProfileImageUpload({ value, onChange, fallback = "?" }: ProfileImageUploadProps) {
   const inputRef = useRef<HTMLInputElement>(null);
   const previewUrl = useMemo(() => (value ? URL.createObjectURL(value) : null), [value]);

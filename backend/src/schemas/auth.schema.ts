@@ -31,7 +31,6 @@ export const patientSignUpSchema = z.object({
   email,
   phone: z.string().trim().regex(phoneRegex, "Invalid phone number"),
   surgeryHistory: z.string().trim().optional().default(""),
-  // Comma separated string coming from the form, split into an array.
   illnessHistory: z
     .string()
     .optional()

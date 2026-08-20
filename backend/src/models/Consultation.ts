@@ -5,22 +5,19 @@ const consultationSchema = new Schema(
     doctor: { type: Schema.Types.ObjectId, ref: "Doctor", required: true, index: true },
     patient: { type: Schema.Types.ObjectId, ref: "Patient", required: true, index: true },
 
-    // Step 1
     currentIllnessHistory: { type: String, required: true },
     recentSurgery: {
       hadSurgery: { type: Boolean, default: false },
       details: { type: String, default: "" },
-      timeSpan: { type: String, default: "" }, // e.g. "6 months ago"
+      timeSpan: { type: String, default: "" }, 
     },
 
-    // Step 2
     familyMedicalHistory: {
       diabetesStatus: { type: String, enum: ["diabetic", "non-diabetic"], required: true },
       allergies: { type: String, default: "" },
       others: { type: String, default: "" },
     },
 
-    // Step 3
     payment: {
       transactionId: { type: String, required: true },
       qrCodeImage: { type: String, default: "" },

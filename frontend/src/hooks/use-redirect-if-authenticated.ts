@@ -4,10 +4,6 @@ import { useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useSession } from "@/providers/session-provider";
 
-/**
- * Redirects an already-logged-in user away from auth pages (signin/signup) to
- * their dashboard, or the OTP verification page if not yet verified.
- */
 export function useRedirectIfAuthenticated() {
   const session = useSession();
   const router = useRouter();

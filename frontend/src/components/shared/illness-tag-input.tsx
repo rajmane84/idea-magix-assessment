@@ -11,7 +11,6 @@ interface IllnessTagInputProps {
   id?: string;
 }
 
-/** Type-and-press-Enter/comma tag input; committed tags render as removable badges below. */
 export function IllnessTagInput({ value, onChange, id }: IllnessTagInputProps) {
   const [draft, setDraft] = useState("");
 

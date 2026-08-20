@@ -1,7 +1,7 @@
 import bcrypt from "bcryptjs";
 
 export const OTP_LENGTH = 6;
-export const OTP_TTL_MS = 10 * 60 * 1000; // 10 minutes
+export const OTP_TTL_MS = 10 * 60 * 1000; 
 
 export function generateOtp(): string {
   const min = 10 ** (OTP_LENGTH - 1);

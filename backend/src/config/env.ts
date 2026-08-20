@@ -11,9 +11,6 @@ const envSchema = z
     EMAIL_FROM: z.string().default("Prescripto <onboarding@resend.dev>"),
     RESEND_API_KEY: z.string().optional(),
     SERVER_URL: z.string().optional(),
-    // "local" writes profile images/PDFs to disk (used in production on Render,
-    // which can't run docker-compose). "s3" uses an S3-compatible bucket, e.g.
-    // MinIO via docker-compose for local/self-hosted setups. See README.
     STORAGE_DRIVER: z.enum(["local", "s3"]).default("local"),
     STORAGE_LOCAL_DIR: z.string().default("uploads"),
     S3_ENDPOINT: z.string().optional(),

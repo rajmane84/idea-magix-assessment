@@ -12,7 +12,6 @@ function getResendClient(): Resend {
   return resendClient;
 }
 
-/** Ethereal sandbox account, created lazily and reused for the life of the process. */
 async function getDevTransporter(): Promise<Transporter> {
   if (devTransporter) return devTransporter;
 

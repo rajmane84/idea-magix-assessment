@@ -9,9 +9,6 @@ interface PdfPreviewDialogProps {
   triggerSize?: "sm" | "default";
 }
 
-/**
- * Preview opens the PDF in a new tab via the browser's built-in viewer.
- */
 export function PdfPreviewDialog({
   url,
   triggerLabel = "Preview",

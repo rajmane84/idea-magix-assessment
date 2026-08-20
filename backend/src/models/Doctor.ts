@@ -21,7 +21,6 @@ export interface IDoctor {
 }
 
 export interface IDoctorMethods {
-  // comparePassword(candidate: string): Promise<boolean>;
   isOtpExpired(): boolean;
 }
 
@@ -54,7 +53,6 @@ const doctorSchema = new Schema<IDoctor, DoctorModel, IDoctorMethods>(
     otpCodeHash: { type: String, select: false, default: null },
     otpExpiresAt: { type: Date, select: false, default: null },
     otpAttempts: { type: Number, select: false, default: 0 },
-    // Prevents OTP-resend spam — check this before issuing a new code.
     otpLastSentAt: { type: Date, select: false, default: null },
   },
   { timestamps: true },

@@ -7,8 +7,6 @@ function imageFileFilter(req: unknown, file: Express.Multer.File, cb: multer.Fil
   cb(null, true);
 }
 
-// Buffers the file in memory so the storage service can write it straight to
-// its destination (disk or S3) without an intermediate temp file.
 export const uploadProfileImage = multer({
   storage: multer.memoryStorage(),
   fileFilter: imageFileFilter,

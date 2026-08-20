@@ -3,7 +3,6 @@ import { Doctor } from "../models/Doctor";
 import { Patient } from "../models/Patient";
 import type { AuthenticatedRequest } from "../types";
 
-/** Blocks doctors/patients who haven't completed OTP verification from sensitive actions. */
 export function requireVerified() {
   return async (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
     if (!req.user) return next(new Error("Unauthorized"));

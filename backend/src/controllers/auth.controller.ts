@@ -18,7 +18,6 @@ import type { AuthenticatedRequest } from "../types";
 
 type VerifiableUser = InstanceType<typeof Doctor> | InstanceType<typeof Patient>;
 
-/** Generates a fresh OTP, persists its hash on the user, and emails it. Signup/login stay usable even if the email send fails. */
 async function issueOtp(user: VerifiableUser) {
   const code = generateOtp();
   user.otpCodeHash = await hashOtp(code);
